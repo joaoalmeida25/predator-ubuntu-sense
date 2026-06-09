@@ -1,14 +1,14 @@
+mod helper;
+
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use helper::run_privileged_helper;
 use predator_core::{
     adapters::{
-        battery::{get_battery_limiter, set_battery_limiter},
-        device_settings::{
-            get_backlight_timeout, get_boot_animation_sound, set_backlight_timeout,
-            set_boot_animation_sound,
-        },
+        battery::get_battery_limiter,
+        device_settings::{get_backlight_timeout, get_boot_animation_sound},
         diagnostics::get_diagnostics_report,
-        performance::{get_current_profile, list_available_profiles, set_profile},
+        performance::{get_current_profile, list_available_profiles},
         rgb::{get_rgb_state, set_static_color},
     },
     domain::{
@@ -166,13 +166,7 @@ fn handle_profile_command(command: ProfileCommand) -> Result<()> {
                 .parse::<PerformanceProfile>()
                 .map_err(anyhow::Error::msg)?;
 
-            set_profile(profile)?;
-
-            println!(
-                "Performance profile changed to '{}' ({})",
-                profile.as_str(),
-                profile.friendly_name()
-            );
+            run_privileged_helper(&["profile", "set", profile.as_str()])?;
         }
     }
 
@@ -219,13 +213,11 @@ fn handle_battery_command(command: BatteryCommand) -> Result<()> {
             }
 
             ToggleCommand::On => {
-                set_battery_limiter(true)?;
-                println!("Battery limiter enabled");
+                run_privileged_helper(&["battery", "limiter", "on"])?;
             }
 
             ToggleCommand::Off => {
-                set_battery_limiter(false)?;
-                println!("Battery limiter disabled");
+                run_privileged_helper(&["battery", "limiter", "off"])?;
             }
         },
     }
@@ -242,13 +234,11 @@ fn handle_settings_command(command: SettingsCommand) -> Result<()> {
             }
 
             ToggleCommand::On => {
-                set_boot_animation_sound(true)?;
-                println!("Boot animation sound enabled");
+                run_privileged_helper(&["settings", "boot-sound", "on"])?;
             }
 
             ToggleCommand::Off => {
-                set_boot_animation_sound(false)?;
-                println!("Boot animation sound disabled");
+                run_privileged_helper(&["settings", "boot-sound", "off"])?;
             }
         },
 
@@ -259,13 +249,11 @@ fn handle_settings_command(command: SettingsCommand) -> Result<()> {
             }
 
             ToggleCommand::On => {
-                set_backlight_timeout(true)?;
-                println!("Backlight timeout enabled");
+                run_privileged_helper(&["settings", "backlight-timeout", "on"])?;
             }
 
             ToggleCommand::Off => {
-                set_backlight_timeout(false)?;
-                println!("Backlight timeout disabled");
+                run_privileged_helper(&["settings", "backlight-timeout", "off"])?;
             }
         },
     }
