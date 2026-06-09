@@ -4,8 +4,12 @@ use predator_core::{
     adapters::{
         diagnostics::get_diagnostics_report,
         performance::{get_current_profile, list_available_profiles, set_profile},
+        rgb::{get_rgb_state, set_static_color},
     },
-    domain::performance::PerformanceProfile,
+    domain::{
+        performance::PerformanceProfile,
+        rgb::{RgbColor, RgbDevice},
+    },
 };
 
 #[derive(Parser)]
@@ -26,6 +30,12 @@ enum Commands {
         #[command(subcommand)]
         command: ProfileCommand,
     },
+
+    /// Manage RGB lighting
+    Rgb {
+        #[command(subcommand)]
+        command: RgbCommand,
+    },
 }
 
 #[derive(Subcommand)]
@@ -40,6 +50,26 @@ enum ProfileCommand {
     Set {
         /// Available values: low-power, quiet, balanced, balanced-performance, performance
         profile: String,
+    },
+}
+
+#[derive(Subcommand)]
+enum RgbCommand {
+    /// Show current RGB daemon state
+    Get,
+
+    /// Set static RGB color
+    Set {
+        /// Available values: keyboard, lid, button, all
+        device: String,
+
+        /// Hex color, for example: #500082
+        #[arg(long)]
+        color: String,
+
+        /// Brightness from 0 to 100
+        #[arg(long, default_value_t = 80)]
+        brightness: u8,
     },
 }
 
@@ -76,6 +106,33 @@ fn main() -> Result<()> {
                     "Performance profile changed to '{}' ({})",
                     profile.as_str(),
                     profile.friendly_name()
+                );
+            }
+        },
+
+        Commands::Rgb { command } => match command {
+            RgbCommand::Get => {
+                let state = get_rgb_state()?;
+                println!("{state}");
+            }
+
+            RgbCommand::Set {
+                device,
+                color,
+                brightness,
+            } => {
+                let device = device.parse::<RgbDevice>().map_err(anyhow::Error::msg)?;
+                let color = RgbColor::from_hex(&color).map_err(anyhow::Error::msg)?;
+
+                set_static_color(device, color, brightness)?;
+
+                println!(
+                    "RGB color changed for '{}' to #{:02X}{:02X}{:02X} with brightness {}",
+                    device.as_str(),
+                    color.r,
+                    color.g,
+                    color.b,
+                    brightness
                 );
             }
         },
