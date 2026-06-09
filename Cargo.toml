@@ -2,7 +2,8 @@
 resolver = "2"
 members = [
   "crates/predator-core",
-  "crates/predatorctl"
+  "crates/predatorctl",
+  "crates/predator-helper"
 ]
 
 [workspace.package]
