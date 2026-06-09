@@ -1,0 +1,12 @@
+[workspace]
+resolver = "2"
+members = [
+  "crates/predator-core",
+  "crates/predatorctl"
+]
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/joaoalmeida25/predator-ubuntu-sense"
+authors = ["João Almeida"]
