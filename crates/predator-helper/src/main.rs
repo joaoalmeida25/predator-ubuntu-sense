@@ -4,6 +4,9 @@ use predator_core::{
     adapters::{
         battery::set_battery_limiter,
         device_settings::{set_backlight_timeout, set_boot_animation_sound},
+        driver_runtime::{
+            ensure_driver_runtime_ready, initialize_driver_runtime, DriverRuntimeFeature,
+        },
         performance::set_profile,
     },
     domain::performance::PerformanceProfile,
@@ -36,6 +39,18 @@ enum Commands {
         #[command(subcommand)]
         command: SettingsCommand,
     },
+
+    /// Manage driver runtime
+    Drivers {
+        #[command(subcommand)]
+        command: DriversCommand,
+    },
+}
+
+#[derive(Subcommand)]
+enum DriversCommand {
+    /// Initialize Linux driver runtime
+    Init,
 }
 
 #[derive(Subcommand)]
@@ -87,6 +102,34 @@ fn main() -> Result<()> {
         Commands::Profile { command } => handle_profile_command(command)?,
         Commands::Battery { command } => handle_battery_command(command)?,
         Commands::Settings { command } => handle_settings_command(command)?,
+        Commands::Drivers { command } => handle_drivers_command(command)?,
+    }
+
+    Ok(())
+}
+
+fn handle_drivers_command(command: DriversCommand) -> Result<()> {
+    match command {
+        DriversCommand::Init => {
+            let status = initialize_driver_runtime()?;
+
+            println!("Driver runtime initialization finished");
+            println!("linuwu_sense loaded: {}", status.linuwu_sense_loaded);
+            println!(
+                "platform_profile module loaded: {}",
+                status.platform_profile_module_loaded
+            );
+            println!(
+                "platform_profile available: {}",
+                status.platform_profile_available
+            );
+            println!(
+                "platform_profile choices available: {}",
+                status.platform_profile_choices_available
+            );
+            println!("nitro_sense available: {}", status.nitro_sense_available);
+            println!("DAMX daemon active: {}", status.damx_daemon_active);
+        }
     }
 
     Ok(())
@@ -99,6 +142,7 @@ fn handle_profile_command(command: ProfileCommand) -> Result<()> {
                 .parse::<PerformanceProfile>()
                 .map_err(anyhow::Error::msg)?;
 
+            ensure_driver_runtime_ready(DriverRuntimeFeature::PerformanceProfile)?;
             set_profile(profile)?;
 
             println!(
@@ -116,11 +160,13 @@ fn handle_battery_command(command: BatteryCommand) -> Result<()> {
     match command {
         BatteryCommand::Limiter { command } => match command {
             ToggleCommand::On => {
+                ensure_driver_runtime_ready(DriverRuntimeFeature::NitroSense)?;
                 set_battery_limiter(true)?;
                 println!("Battery limiter enabled");
             }
 
             ToggleCommand::Off => {
+                ensure_driver_runtime_ready(DriverRuntimeFeature::NitroSense)?;
                 set_battery_limiter(false)?;
                 println!("Battery limiter disabled");
             }
@@ -134,11 +180,13 @@ fn handle_settings_command(command: SettingsCommand) -> Result<()> {
     match command {
         SettingsCommand::BootSound { command } => match command {
             ToggleCommand::On => {
+                ensure_driver_runtime_ready(DriverRuntimeFeature::NitroSense)?;
                 set_boot_animation_sound(true)?;
                 println!("Boot animation sound enabled");
             }
 
             ToggleCommand::Off => {
+                ensure_driver_runtime_ready(DriverRuntimeFeature::NitroSense)?;
                 set_boot_animation_sound(false)?;
                 println!("Boot animation sound disabled");
             }
@@ -146,11 +194,13 @@ fn handle_settings_command(command: SettingsCommand) -> Result<()> {
 
         SettingsCommand::BacklightTimeout { command } => match command {
             ToggleCommand::On => {
+                ensure_driver_runtime_ready(DriverRuntimeFeature::NitroSense)?;
                 set_backlight_timeout(true)?;
                 println!("Backlight timeout enabled");
             }
 
             ToggleCommand::Off => {
+                ensure_driver_runtime_ready(DriverRuntimeFeature::NitroSense)?;
                 set_backlight_timeout(false)?;
                 println!("Backlight timeout disabled");
             }

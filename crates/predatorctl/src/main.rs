@@ -8,6 +8,7 @@ use predator_core::{
         battery::get_battery_limiter,
         device_settings::{get_backlight_timeout, get_boot_animation_sound},
         diagnostics::get_diagnostics_report,
+        driver_runtime::get_driver_runtime_status,
         performance::{get_current_profile, list_available_profiles},
         rgb::{get_rgb_state, set_static_color},
     },
@@ -53,6 +54,21 @@ enum Commands {
         #[command(subcommand)]
         command: SettingsCommand,
     },
+
+    /// Manage Linux driver runtime
+    Drivers {
+        #[command(subcommand)]
+        command: DriversCommand,
+    },
+}
+
+#[derive(Subcommand)]
+enum DriversCommand {
+    /// Show driver runtime status
+    Status,
+
+    /// Initialize Linux driver runtime
+    Init,
 }
 
 #[derive(Subcommand)]
@@ -141,6 +157,40 @@ fn main() -> Result<()> {
         Commands::Battery { command } => handle_battery_command(command)?,
 
         Commands::Settings { command } => handle_settings_command(command)?,
+
+        Commands::Drivers { command } => handle_drivers_command(command)?,
+    }
+
+    Ok(())
+}
+
+fn handle_drivers_command(command: DriversCommand) -> Result<()> {
+    match command {
+        DriversCommand::Status => {
+            let status = get_driver_runtime_status();
+
+            println!("Predator Ubuntu Sense - Driver Runtime");
+            println!("--------------------------------------");
+            println!("linuwu_sense loaded: {}", status.linuwu_sense_loaded);
+            println!(
+                "platform_profile module loaded: {}",
+                status.platform_profile_module_loaded
+            );
+            println!(
+                "platform_profile available: {}",
+                status.platform_profile_available
+            );
+            println!(
+                "platform_profile choices available: {}",
+                status.platform_profile_choices_available
+            );
+            println!("nitro_sense available: {}", status.nitro_sense_available);
+            println!("DAMX daemon active: {}", status.damx_daemon_active);
+        }
+
+        DriversCommand::Init => {
+            run_privileged_helper(&["drivers", "init"])?;
+        }
     }
 
     Ok(())
