@@ -283,9 +283,27 @@ fn print_status() -> Result<()> {
         report.model.unwrap_or_else(|| "unknown".into())
     );
     println!(
+        "BIOS: {}",
+        report.bios_version.unwrap_or_else(|| "unknown".into())
+    );
+    println!(
         "Kernel: {}",
         report.kernel.unwrap_or_else(|| "unknown".into())
     );
+
+    println!();
+    println!("Drivers / Services");
+    println!("linuwu_sense loaded: {}", report.linuwu_sense_loaded);
+    println!("acer-rgb available: {}", report.acer_rgb_available);
+    println!(
+        "/dev/acer-rgb available: {}",
+        report.acer_rgb_device_available
+    );
+    println!("acer-rgbd active: {}", report.acer_rgbd_active);
+    println!("DAMX daemon active: {}", report.damx_daemon_active);
+
+    println!();
+    println!("Performance");
     println!(
         "Current profile: {}",
         report.current_profile.unwrap_or_else(|| "unknown".into())
@@ -296,11 +314,28 @@ fn print_status() -> Result<()> {
             .available_profiles
             .unwrap_or_else(|| "unknown".into())
     );
-    println!("acer-rgb available: {}", report.acer_rgb_available);
+
+    println!();
+    println!("Battery / Settings");
     println!(
-        "/dev/acer-rgb available: {}",
-        report.acer_rgb_device_available
+        "Battery limiter: {}",
+        format_optional_enabled(report.battery_limiter)
     );
+    println!(
+        "Boot animation sound: {}",
+        format_optional_enabled(report.boot_animation_sound)
+    );
+    println!(
+        "Backlight timeout: {}",
+        format_optional_enabled(report.backlight_timeout)
+    );
+
+    println!();
+    println!("RGB state:");
+    match report.rgb_state {
+        Some(state) => println!("{state}"),
+        None => println!("unknown"),
+    }
 
     Ok(())
 }
@@ -310,5 +345,13 @@ fn format_enabled(enabled: bool) -> &'static str {
         "on"
     } else {
         "off"
+    }
+}
+
+fn format_optional_enabled(value: Option<bool>) -> &'static str {
+    match value {
+        Some(true) => "on",
+        Some(false) => "off",
+        None => "unknown",
     }
 }
