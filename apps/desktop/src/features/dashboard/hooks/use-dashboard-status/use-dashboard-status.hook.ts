@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+
+import { getDriverStatus } from "../../../../shared/services/driver-runtime/get-driver-status.service";
+import { getSystemStatus } from "../../../../shared/services/system-status/get-system-status.service";
+import type { AsyncState } from "../../../../shared/types/async-state.type";
 import type {
   DashboardStatusData,
   UseDashboardStatusResult,
 } from "./use-dashboard-status.types";
-import {AsyncState} from "../../../../shared/types/async-state.type.ts";
-import {getSystemStatus} from "../../../../shared/services/system-status/get-system-status.service.ts";
-import {getDriverStatus} from "../../../../shared/services/driver-runtime/get-driver-status.service.ts";
 
 const getErrorMessage = (error: unknown): string => {
   return error instanceof Error ? error.message : String(error);
@@ -13,7 +14,9 @@ const getErrorMessage = (error: unknown): string => {
 
 export const useDashboardStatus = (): UseDashboardStatusResult => {
   const latestDataRef = useRef<DashboardStatusData | null>(null);
-  const [statusState, setStatusState] = useState<AsyncState<DashboardStatusData>>({
+  const [statusState, setStatusState] = useState<
+    AsyncState<DashboardStatusData>
+  >({
     status: "idle",
     data: null,
     error: null,

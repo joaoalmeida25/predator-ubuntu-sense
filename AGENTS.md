@@ -100,6 +100,13 @@ export const Dashboard = (): ReactElement => {
 - Keep `shared/styles/global.css` limited to reset/base styles, design tokens, `body`, `:root`, and universal selectors.
 - Do not put feature-specific classes such as dashboard cards or grids in global CSS.
 
+## Desktop shell and visual placeholders
+
+- The desktop app uses an internal React app shell with sidebar/header state instead of React Router.
+- Keep page navigation local to the shell until routing is explicitly required.
+- The Dashboard AI Core is a CSS/SVG placeholder component prepared for a future WebGL implementation.
+- Do not replace the AI Core placeholder with Three.js or React Three Fiber until that integration is requested.
+
 ## Tauri and Rust boundaries
 
 - React must not call `sysfs`, `pkexec`, `sudo`, shell scripts, or privileged commands directly.

@@ -1,0 +1,302 @@
+.corePanel {
+  position: relative;
+  display: flex;
+  min-height: 560px;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(180, 110, 255, 0.22);
+  border-radius: 28px;
+  padding: 22px;
+  background:
+    radial-gradient(circle at 50% 58%, rgba(155, 77, 255, 0.24), transparent 36%),
+    radial-gradient(circle at 50% 34%, rgba(41, 217, 255, 0.12), transparent 28%),
+    linear-gradient(145deg, rgba(18, 12, 31, 0.72), rgba(4, 3, 12, 0.62));
+  box-shadow: var(--shadow-panel), var(--shadow-glow);
+}
+
+.corePanel::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background-image: radial-gradient(rgba(185, 104, 255, 0.36) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.16;
+}
+
+.panelHeader {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--color-purple-strong);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 8px 0 0;
+  font-size: clamp(24px, 3vw, 38px);
+  letter-spacing: 0.03em;
+}
+
+.stage {
+  position: relative;
+  display: grid;
+  min-height: 360px;
+  flex: 1;
+  place-items: center;
+  perspective: 900px;
+}
+
+.orbitOuter,
+.orbitMiddle,
+.orbitInner,
+.baseRing,
+.coreGlow,
+.scanlines,
+.network,
+.particleOne,
+.particleTwo,
+.particleThree {
+  position: absolute;
+}
+
+.orbitOuter,
+.orbitMiddle,
+.orbitInner {
+  border: 1px solid rgba(185, 104, 255, 0.28);
+  border-radius: 50%;
+  box-shadow: 0 0 28px rgba(155, 77, 255, 0.16);
+  animation: rotateCore 16s linear infinite;
+}
+
+.orbitOuter {
+  width: min(66vw, 430px);
+  height: min(66vw, 430px);
+  transform: rotateX(68deg) rotateZ(12deg);
+}
+
+.orbitMiddle {
+  width: min(54vw, 350px);
+  height: min(54vw, 350px);
+  border-color: rgba(41, 217, 255, 0.24);
+  animation-direction: reverse;
+  transform: rotateX(58deg) rotateZ(-28deg);
+}
+
+.orbitInner {
+  width: min(42vw, 270px);
+  height: min(42vw, 270px);
+  transform: rotateX(64deg) rotateZ(48deg);
+}
+
+.coreGlow {
+  width: min(54vw, 360px);
+  height: min(54vw, 360px);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 2%, rgba(41, 217, 255, 0.78) 3% 5%, transparent 7%),
+    radial-gradient(circle, rgba(155, 77, 255, 0.54), transparent 62%);
+  filter: blur(0.2px);
+  animation: pulseCore 3.8s ease-in-out infinite;
+}
+
+.scanlines {
+  inset: 12%;
+  opacity: 0.24;
+  background: repeating-linear-gradient(0deg, transparent 0 8px, rgba(255, 255, 255, 0.18) 9px 10px);
+  mask-image: radial-gradient(circle, black 30%, transparent 70%);
+}
+
+.network {
+  width: min(58vw, 390px);
+  height: min(58vw, 390px);
+  overflow: visible;
+  filter: drop-shadow(0 0 10px rgba(185, 104, 255, 0.85));
+  animation: floatNetwork 6s ease-in-out infinite;
+}
+
+.neuralLine {
+  stroke: rgba(185, 104, 255, 0.52);
+  stroke-width: 0.42;
+  animation: linePulse 3.4s ease-in-out infinite;
+}
+
+.neuralNode,
+.neuralNodeHot {
+  fill: #d9c2ff;
+  animation: nodePulse 2.8s ease-in-out infinite;
+}
+
+.neuralNodeHot {
+  fill: var(--color-cyan);
+  filter: drop-shadow(0 0 6px rgba(41, 217, 255, 0.9));
+}
+
+.baseRing {
+  bottom: 32px;
+  width: min(44vw, 330px);
+  height: 74px;
+  border: 2px solid rgba(185, 104, 255, 0.58);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(155, 77, 255, 0.46), transparent 68%);
+  box-shadow: 0 0 38px rgba(155, 77, 255, 0.68), inset 0 0 22px rgba(41, 217, 255, 0.36);
+  animation: basePulse 3s ease-in-out infinite;
+}
+
+.particleOne,
+.particleTwo,
+.particleThree {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-cyan);
+  box-shadow: 0 0 18px currentColor;
+  animation: particleDrift 7s ease-in-out infinite;
+}
+
+.particleOne {
+  top: 34%;
+  left: 28%;
+}
+
+.particleTwo {
+  top: 45%;
+  right: 24%;
+  color: var(--color-purple-strong);
+  animation-delay: -2s;
+}
+
+.particleThree {
+  bottom: 28%;
+  left: 48%;
+  animation-delay: -4s;
+}
+
+.telemetryGrid {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.telemetryCard {
+  border: 1px solid rgba(180, 110, 255, 0.18);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(5, 3, 10, 0.5);
+}
+
+.telemetryCard span {
+  display: block;
+  color: var(--color-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.telemetryCard strong {
+  display: block;
+  margin-top: 6px;
+  color: #ffffff;
+  font-size: 16px;
+}
+
+.futureNote {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+  border: 1px solid rgba(41, 217, 255, 0.28);
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: rgba(5, 3, 10, 0.52);
+}
+
+.futureNote span {
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: var(--color-purple-strong);
+  background: rgba(155, 77, 255, 0.16);
+  font-weight: 900;
+}
+
+.futureNote p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+@keyframes rotateCore {
+  from {
+    rotate: 0deg;
+  }
+
+  to {
+    rotate: 360deg;
+  }
+}
+
+@keyframes pulseCore {
+  50% {
+    transform: scale(1.05);
+    opacity: 0.82;
+  }
+}
+
+@keyframes floatNetwork {
+  50% {
+    transform: translateY(-12px) rotateX(7deg);
+  }
+}
+
+@keyframes linePulse {
+  50% {
+    stroke: rgba(41, 217, 255, 0.7);
+  }
+}
+
+@keyframes nodePulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes basePulse {
+  50% {
+    transform: scaleX(1.08);
+  }
+}
+
+@keyframes particleDrift {
+  50% {
+    transform: translate3d(26px, -24px, 0);
+    opacity: 0.42;
+  }
+}
+
+@media (max-width: 980px) {
+  .corePanel {
+    min-height: 520px;
+  }
+
+  .telemetryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .futureNote {
+    align-items: flex-start;
+    flex-direction: column;
+    border-radius: 18px;
+  }
+}

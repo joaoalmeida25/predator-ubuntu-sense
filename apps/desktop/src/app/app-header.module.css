@@ -1,0 +1,82 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--color-border);
+  background: rgba(5, 3, 10, 0.78);
+  backdrop-filter: blur(22px);
+}
+
+.contextGroup,
+.actionGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.pill,
+.statusChip,
+.iconButton {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.pill {
+  padding: 8px 12px;
+  color: var(--color-cyan);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.separator {
+  width: 1px;
+  height: 28px;
+  background: var(--color-border);
+}
+
+.contextLabel {
+  color: var(--color-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.statusChip,
+.iconButton {
+  padding: 9px 12px;
+  font-size: 13px;
+}
+
+.iconButton {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+@media (max-width: 900px) {
+  .header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 16px 18px;
+  }
+
+  .actionGroup {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 760px) {
+  .header {
+    position: relative;
+  }
+}

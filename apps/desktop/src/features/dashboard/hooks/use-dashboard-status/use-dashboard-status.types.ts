@@ -1,4 +1,4 @@
-import {AsyncState} from "../../../../shared/types/async-state.type.ts";
+import type { AsyncState } from "../../../../shared/types/async-state.type";
 
 export interface DashboardStatusData {
   systemStatus: string;
