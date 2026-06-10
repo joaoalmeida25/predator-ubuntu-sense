@@ -3,7 +3,8 @@ resolver = "2"
 members = [
   "crates/predator-core",
   "crates/predatorctl",
-  "crates/predator-helper"
+  "crates/predator-helper",
+  "apps/desktop/src-tauri"
 ]
 
 [workspace.package]
