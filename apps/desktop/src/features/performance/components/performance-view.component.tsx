@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactElement } from "react";
 
+import thermalRenderUrl from "../../../shared/assets/thermal-underside-render.svg";
 import type {
   PerformanceProfile,
   PerformanceProfileId,
@@ -37,21 +38,23 @@ export const PerformanceView = ({
     <section className={styles.performance}>
       <header className={styles.heroHeader}>
         <div>
-          <p className={styles.eyebrow}>Performance</p>
-          <h1 className={styles.title}>Power Profiles</h1>
+          <h1 className={styles.title}>Performance</h1>
           <p className={styles.description}>
-            Optimize system performance and fan behavior for each scenario.
+            Optimize system performance and fan behavior for any scenario.
           </p>
         </div>
 
         <div className={styles.headerActions}>
           <div className={styles.activeSummary}>
-            <span className={styles.activeDot} />
+            <span className={`${styles.activeDot} ${activeVisual ? styles[activeVisual.tone] : ""}`} />
             <div>
-              <strong>{activeVisual?.title ?? "Unknown"}</strong>
+              <strong>{activeVisual?.title ?? "Unknown"} Mode</strong>
               <span>Active Profile</span>
             </div>
           </div>
+          <button type="button" className={styles.managerButton} disabled>
+            Profile Manager
+          </button>
           <button
             type="button"
             className={styles.refreshButton}
@@ -87,10 +90,7 @@ export const PerformanceView = ({
         <SystemPerformanceCard metrics={systemMetrics} />
         <ThermalOverviewCard metrics={thermalMetrics} />
         <FanCoolingCard />
-        <ActiveProfileInfoCard activeVisual={activeVisual} />
       </div>
-
-      <PerformanceActionStrip />
     </section>
   );
 };
@@ -118,11 +118,12 @@ const ProfileCard = ({
         profile.isCurrent ? styles.profileCardActive : ""
       }`}
     >
-      {profile.isCurrent ? <span className={styles.currentCheck}>OK</span> : null}
-      <div className={styles.profileIcon}>{visual.iconLabel}</div>
+      {profile.isCurrent ? <span className={styles.currentCheck}>✓</span> : null}
+      <div className={styles.profileIcon}>
+        <ProfileIcon id={visual.iconId} />
+      </div>
       <h2>{visual.title}</h2>
       <p>{visual.description}</p>
-      <span className={styles.profileId}>{profile.id}</span>
       <button
         type="button"
         onClick={() => onProfileChange(profile.id)}
@@ -132,6 +133,25 @@ const ProfileCard = ({
       </button>
     </article>
   );
+};
+
+interface ProfileIconProps {
+  id: PerformanceViewProps["profileVisuals"][PerformanceProfileId]["iconId"];
+}
+
+const ProfileIcon = ({ id }: ProfileIconProps): ReactElement => {
+  switch (id) {
+    case "leaf":
+      return <LeafIcon />;
+    case "waves":
+      return <WavesIcon />;
+    case "scale":
+      return <ScaleIcon />;
+    case "gauge":
+      return <GaugeIcon />;
+    case "swirl":
+      return <SwirlIcon />;
+  }
 };
 
 interface SystemPerformanceCardProps {
@@ -169,10 +189,7 @@ const ThermalOverviewCard = ({
   return (
     <article className={styles.panelCard}>
       <PanelHeader title="Thermal Overview" label="Balanced cooling" />
-      <div className={styles.thermalMock}>
-        <div className={styles.fanGlowLeft} />
-        <div className={styles.fanGlowRight} />
-      </div>
+      <img className={styles.thermalImage} src={thermalRenderUrl} alt="" />
       <div className={styles.thermalList}>
         {metrics.map((metric) => (
           <div key={metric.label} className={styles.thermalRow}>
@@ -196,14 +213,17 @@ const FanCoolingCard = (): ReactElement => {
       <PanelHeader title="Fan & Cooling" label="Auto mode" />
       <div className={styles.modeGrid}>
         <button type="button" className={styles.modeButtonActive} disabled>
+          <FanIcon />
           <strong>Auto</strong>
           <span>Smart Cooling</span>
         </button>
         <button type="button" className={styles.modeButton} disabled>
+          <FanIcon />
           <strong>Max</strong>
           <span>Full Speed</span>
         </button>
         <button type="button" className={styles.modeButton} disabled>
+          <SlidersIcon />
           <strong>Custom</strong>
           <span>Manual Curve</span>
         </button>
@@ -216,61 +236,6 @@ const FanCoolingCard = (): ReactElement => {
         <span />
       </div>
     </article>
-  );
-};
-
-interface ActiveProfileInfoCardProps {
-  activeVisual: PerformanceViewProps["profileVisuals"][PerformanceProfileId] | null;
-}
-
-const ActiveProfileInfoCard = ({
-  activeVisual,
-}: ActiveProfileInfoCardProps): ReactElement => {
-  return (
-    <article className={`${styles.panelCard} ${styles.profileInfoCard}`}>
-      <PanelHeader title="Active Profile Info" label={activeVisual?.title ?? "Unknown"} />
-      <p className={styles.infoDescription}>
-        {activeVisual?.description ?? "No active performance profile was reported."}
-      </p>
-      <ul className={styles.infoList}>
-        {(activeVisual?.infoBullets ?? ["Waiting for profile data"]).map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    </article>
-  );
-};
-
-const PerformanceActionStrip = (): ReactElement => {
-  return (
-    <div className={styles.actionStrip}>
-      <ActionToggle title="Overclocking" value="Disabled" />
-      <ActionToggle title="Dynamic Boost" value="Enabled" isActive />
-      <ActionToggle title="GPU Overclock" value="Disabled" />
-      <button type="button" className={styles.advancedButton} disabled>
-        Advanced Settings
-      </button>
-    </div>
-  );
-};
-
-interface ActionToggleProps {
-  title: string;
-  value: string;
-  isActive?: boolean;
-}
-
-const ActionToggle = ({
-  title,
-  value,
-  isActive = false,
-}: ActionToggleProps): ReactElement => {
-  return (
-    <button type="button" className={styles.actionToggle} disabled>
-      <span>{title}</span>
-      <strong>{value}</strong>
-      <i className={isActive ? styles.switchOn : styles.switchOff} />
-    </button>
   );
 };
 
@@ -287,3 +252,31 @@ const PanelHeader = ({ title, label }: PanelHeaderProps): ReactElement => {
     </div>
   );
 };
+
+const LeafIcon = (): ReactElement => (
+  <svg viewBox="0 0 64 64" role="img"><path d="M52 8C27 10 12 25 13 48c20 2 36-11 39-40ZM17 47c7-13 17-22 31-32" /></svg>
+);
+
+const WavesIcon = (): ReactElement => (
+  <svg viewBox="0 0 64 64" role="img"><path d="M9 22c8-8 15 8 23 0s15 8 23 0M9 34c8-8 15 8 23 0s15 8 23 0M9 46c8-8 15 8 23 0s15 8 23 0" /></svg>
+);
+
+const ScaleIcon = (): ReactElement => (
+  <svg viewBox="0 0 64 64" role="img"><path d="M32 9v44M17 17h30M18 17l-9 18h18L18 17Zm28 0-9 18h18l-9-18ZM22 53h20" /></svg>
+);
+
+const GaugeIcon = (): ReactElement => (
+  <svg viewBox="0 0 64 64" role="img"><path d="M10 43a22 22 0 1 1 44 0M32 43l10-18M19 43h26" /></svg>
+);
+
+const SwirlIcon = (): ReactElement => (
+  <svg viewBox="0 0 64 64" role="img"><path d="M32 8c15 0 20 18 9 27 11-1 15 12 5 18-13 8-30-3-26-17-10 5-17-8-9-17 6-7 16-8 21-11Z" /></svg>
+);
+
+const FanIcon = (): ReactElement => (
+  <svg viewBox="0 0 24 24" role="img"><path d="M12 10a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm1-8c5 1 6 6 2 9 5-2 8 2 6 7-3 4-8 3-9-2-1 5-6 6-9 2-2-5 1-9 6-7-4-3-3-8 2-9h2Z" /></svg>
+);
+
+const SlidersIcon = (): ReactElement => (
+  <svg viewBox="0 0 24 24" role="img"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M8 13a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm8-10a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" /></svg>
+);

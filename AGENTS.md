@@ -147,3 +147,16 @@ pnpm tauri dev
 ```
 
 If `pnpm tauri dev` is interactive or cannot be kept running in the current environment, start it long enough to verify compilation and report exactly what happened.
+
+## Visual shell conventions
+
+- The desktop shell is intentionally desktop-first: fixed sidebar, minimal header, and a content area designed to fit common laptop resolutions without main-window scroll when possible.
+- The header should stay minimal. Do not reintroduce inactive alert/settings/AI-assistant button clutter unless the corresponding feature is implemented.
+- Sidebar icons and app branding must use original project artwork. Do not ship official Acer/Predator logos or proprietary assets.
+- Device and thermal visuals are lightweight original SVG placeholders under `shared/assets`.
+
+## Current visual placeholders and backlog
+
+- Dashboard AI Core is implemented as a granular CSS/SVG animated placeholder, not WebGL.
+- Do not add Three.js / React Three Fiber until the 3D implementation is explicitly requested.
+- Mocked telemetry and future improvements are tracked in `docs/frontend-improvements-backlog.md`.

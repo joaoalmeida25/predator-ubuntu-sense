@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 
+import laptopRenderUrl from "../../../../shared/assets/predator-laptop-render.svg";
 import styles from "./device-overview-card.module.css";
 import type { DeviceOverviewCardProps } from "./device-overview-card.types";
 
@@ -15,12 +16,7 @@ export const DeviceOverviewCard = ({
         <h2>Device Overview</h2>
       </div>
 
-      <div className={styles.deviceMock} aria-label="Device placeholder">
-        <div className={styles.screen}>
-          <span>P</span>
-        </div>
-        <div className={styles.keyboard} />
-      </div>
+      <img className={styles.deviceImage} src={laptopRenderUrl} alt="" />
 
       <div className={styles.identity}>
         <strong>{name}</strong>
@@ -35,6 +31,11 @@ export const DeviceOverviewCard = ({
           </div>
         ))}
       </dl>
+
+      <button type="button" className={styles.fullSpecsButton} disabled>
+        View Full Specs
+        <span aria-hidden="true">›</span>
+      </button>
     </article>
   );
 };

@@ -1,60 +1,62 @@
 .performance {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  display: grid;
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: auto minmax(210px, 0.43fr) minmax(0, 1fr);
+  gap: 16px;
 }
 
 .heroHeader {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 24px;
-}
-
-.eyebrow {
-  margin: 0 0 8px;
-  color: var(--color-purple-strong);
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  gap: 22px;
 }
 
 .title {
   margin: 0;
-  font-size: clamp(34px, 4vw, 54px);
-  letter-spacing: -0.04em;
+  color: var(--color-text);
+  font-size: clamp(34px, 3.1vw, 50px);
+  letter-spacing: -0.045em;
+  line-height: 1;
 }
 
 .description {
-  margin: 10px 0 0;
+  margin: 9px 0 0;
   color: var(--color-muted);
 }
 
 .headerActions {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+}
+
+.activeSummary,
+.managerButton,
+.refreshButton {
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.035);
+  box-shadow: var(--shadow-panel);
 }
 
 .activeSummary {
   display: flex;
-  min-width: 250px;
+  min-width: 210px;
   align-items: center;
   gap: 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  padding: 12px 16px;
-  background: var(--color-panel);
-  box-shadow: var(--shadow-panel);
+  padding: 11px 14px;
 }
 
 .activeDot {
-  width: 18px;
-  height: 18px;
-  border: 4px solid var(--color-purple-strong);
+  width: 17px;
+  height: 17px;
+  border: 4px solid currentColor;
   border-radius: 50%;
-  box-shadow: 0 0 18px rgba(185, 104, 255, 0.74);
+  color: var(--color-blue);
+  box-shadow: 0 0 18px currentColor;
 }
 
 .activeSummary strong,
@@ -64,18 +66,19 @@
 
 .activeSummary span {
   color: var(--color-muted);
-  font-size: 13px;
+  font-size: 12px;
+}
+
+.managerButton,
+.refreshButton {
+  padding: 12px 16px;
+  cursor: not-allowed;
+  font-weight: 900;
 }
 
 .refreshButton {
-  border: 1px solid rgba(180, 110, 255, 0.44);
-  border-radius: 14px;
-  padding: 12px 18px;
-  color: #ffffff;
-  background: linear-gradient(135deg, rgba(155, 77, 255, 0.85), rgba(99, 43, 214, 0.68));
-  box-shadow: 0 0 28px rgba(155, 77, 255, 0.22);
   cursor: pointer;
-  font-weight: 900;
+  background: linear-gradient(135deg, rgba(126, 77, 255, 0.82), rgba(62, 92, 210, 0.72));
 }
 
 .refreshButton:disabled {
@@ -85,16 +88,15 @@
 
 .errorCard,
 .panelCard,
-.profileCard,
-.actionStrip {
+.profileCard {
   border: 1px solid var(--color-border);
-  border-radius: 22px;
+  border-radius: 20px;
   background: var(--color-panel);
   box-shadow: var(--shadow-panel);
 }
 
 .errorCard {
-  padding: 16px;
+  padding: 14px;
   color: #ffd7d7;
   background: rgba(120, 20, 40, 0.22);
 }
@@ -106,37 +108,39 @@
 
 .profileGrid {
   display: grid;
+  min-height: 0;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 16px;
+  gap: 14px;
 }
 
 .profileCard {
   position: relative;
   display: flex;
-  min-height: 250px;
+  min-height: 0;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   overflow: hidden;
-  padding: 24px;
+  padding: 20px 18px 16px;
+  color: currentColor;
   text-align: center;
 }
 
 .profileCard::before {
   position: absolute;
-  inset: -80px 20% auto;
-  height: 170px;
+  inset: -82px 18% auto;
+  height: 168px;
   border-radius: 50%;
-  background: radial-gradient(circle, currentColor, transparent 70%);
+  background: radial-gradient(circle, currentColor, transparent 72%);
   content: "";
   filter: blur(34px);
-  opacity: 0.22;
+  opacity: 0.18;
 }
 
 .profileCardActive {
-  border-color: color-mix(in srgb, currentColor 72%, white 4%);
-  box-shadow: 0 0 42px color-mix(in srgb, currentColor 36%, transparent), var(--shadow-panel);
+  border-color: color-mix(in srgb, currentColor 72%, white 6%);
+  box-shadow: 0 0 40px color-mix(in srgb, currentColor 34%, transparent), var(--shadow-panel);
 }
 
 .currentCheck {
@@ -144,33 +148,37 @@
   top: 12px;
   right: 12px;
   display: grid;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   place-items: center;
   border-radius: 50%;
-  color: #16091f;
-  background: var(--color-purple-strong);
-  box-shadow: 0 0 22px rgba(185, 104, 255, 0.68);
-  font-size: 10px;
-  font-weight: 900;
+  color: #061024;
+  background: currentColor;
+  box-shadow: 0 0 22px currentColor;
+  font-size: 16px;
+  font-weight: 950;
 }
 
 .profileIcon {
   position: relative;
   z-index: 1;
   display: grid;
-  width: 84px;
-  height: 84px;
+  width: 78px;
+  height: 78px;
   place-items: center;
-  border: 1px solid color-mix(in srgb, currentColor 40%, transparent);
-  border-radius: 28px;
   color: currentColor;
-  background: color-mix(in srgb, currentColor 12%, transparent);
-  box-shadow: 0 0 24px color-mix(in srgb, currentColor 24%, transparent);
-  font-size: 14px;
-  font-weight: 900;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+}
+
+.profileIcon svg {
+  width: 66px;
+  height: 66px;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4;
+  filter: drop-shadow(0 0 12px currentColor);
 }
 
 .profileCard h2,
@@ -183,44 +191,36 @@
 .profileCard h2 {
   color: var(--color-text);
   font-size: 20px;
+  font-weight: 950;
 }
 
 .profileCard p {
-  min-height: 46px;
+  min-height: 42px;
   color: var(--color-muted);
   font-size: 13px;
   line-height: 1.45;
-}
-
-.profileId {
-  position: relative;
-  z-index: 1;
-  color: var(--color-dim);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
 }
 
 .profileCard button {
   position: relative;
   z-index: 1;
   width: 100%;
-  border: 1px solid color-mix(in srgb, currentColor 52%, transparent);
+  border: 1px solid color-mix(in srgb, currentColor 56%, transparent);
   border-radius: 12px;
-  padding: 11px 14px;
-  color: var(--color-text);
-  background: color-mix(in srgb, currentColor 16%, transparent);
+  padding: 10px 14px;
+  color: currentColor;
+  background: color-mix(in srgb, currentColor 12%, transparent);
   cursor: pointer;
-  font-weight: 900;
+  font-weight: 950;
 }
 
 .profileCard button:hover:not(:disabled) {
-  background: color-mix(in srgb, currentColor 26%, transparent);
+  background: color-mix(in srgb, currentColor 22%, transparent);
 }
 
 .profileCard button:disabled {
   cursor: not-allowed;
-  opacity: 0.64;
+  opacity: 0.72;
 }
 
 .eco {
@@ -228,34 +228,33 @@
 }
 
 .quiet {
-  color: #3296ff;
+  color: #f4f0ff;
 }
 
 .balanced {
-  color: var(--color-purple-strong);
+  color: var(--color-blue);
 }
 
 .performanceTone {
-  color: var(--color-orange);
+  color: var(--color-violet-dark);
 }
 
 .turbo {
-  color: var(--color-red);
+  color: var(--color-magenta);
 }
 
 .supportGrid {
   display: grid;
-  grid-template-columns: 1.05fr 1.3fr 1fr;
-  gap: 18px;
+  min-height: 0;
+  grid-template-columns: 1fr 1.28fr 1fr;
+  gap: 14px;
 }
 
 .panelCard {
   min-width: 0;
-  padding: 20px;
-}
-
-.profileInfoCard {
-  grid-column: 3;
+  min-height: 0;
+  padding: 18px;
+  overflow: hidden;
 }
 
 .panelHeader {
@@ -263,24 +262,40 @@
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .panelHeader h2 {
   margin: 0;
+  color: var(--color-text);
   font-size: 18px;
+  font-weight: 950;
+}
+
+.panelHeader h2::before {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 9px;
+  border-radius: 50%;
+  background: var(--color-blue);
+  box-shadow: 0 0 14px var(--color-blue);
+  content: "";
+  vertical-align: middle;
 }
 
 .panelHeader span {
   color: var(--color-purple-strong);
-  font-size: 13px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .gaugeGrid {
   display: grid;
+  height: calc(100% - 38px);
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
+  align-items: center;
 }
 
 .gaugeItem {
@@ -298,15 +313,15 @@
   place-items: center;
   border-radius: 50%;
   background:
-    radial-gradient(circle at center, rgba(5, 3, 10, 0.96) 0 52%, transparent 53%),
-    conic-gradient(var(--color-purple-strong) var(--progress), rgba(255, 255, 255, 0.1) 0);
-  box-shadow: 0 0 34px rgba(155, 77, 255, 0.24);
+    radial-gradient(circle at center, rgba(3, 6, 18, 0.98) 0 52%, transparent 53%),
+    conic-gradient(var(--color-purple-strong) var(--progress), rgba(255, 255, 255, 0.09) 0);
+  box-shadow: 0 0 34px rgba(126, 77, 255, 0.24);
 }
 
 .gauge span {
   color: #ffffff;
   font-size: 30px;
-  font-weight: 900;
+  font-weight: 950;
 }
 
 .gaugeItem strong {
@@ -317,56 +332,34 @@
   color: var(--color-muted);
 }
 
-.thermalMock {
-  position: relative;
-  min-height: 150px;
-  overflow: hidden;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background:
-    linear-gradient(90deg, transparent 0 8%, rgba(255, 255, 255, 0.06) 8% 10%, transparent 10% 18%),
-    linear-gradient(135deg, rgba(155, 77, 255, 0.22), rgba(255, 63, 117, 0.12));
-}
-
-.fanGlowLeft,
-.fanGlowRight {
-  position: absolute;
-  top: 46px;
-  width: 64px;
-  height: 64px;
-  border: 10px solid rgba(185, 104, 255, 0.62);
-  border-radius: 50%;
-  box-shadow: 0 0 34px rgba(185, 104, 255, 0.8), inset 0 0 18px rgba(41, 217, 255, 0.42);
-  animation: fanPulse 2.4s ease-in-out infinite;
-}
-
-.fanGlowLeft {
-  left: 22%;
-}
-
-.fanGlowRight {
-  right: 22%;
-  animation-delay: -1.2s;
+.thermalImage {
+  display: block;
+  width: min(100%, 530px);
+  height: min(47%, 170px);
+  min-height: 122px;
+  margin: -2px auto 4px;
+  object-fit: contain;
+  filter: drop-shadow(0 24px 34px rgba(0, 0, 0, 0.4));
 }
 
 .thermalList {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 14px;
+  gap: 11px;
+  margin-top: 4px;
 }
 
 .thermalRow {
   display: grid;
-  grid-template-columns: 86px minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 13px;
   align-items: center;
 }
 
 .thermalRow div:first-child {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .thermalRow strong {
@@ -383,7 +376,7 @@
   height: 7px;
   overflow: hidden;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.09);
 }
 
 .thermalTrack span,
@@ -392,7 +385,7 @@
   width: var(--progress);
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--color-cyan), var(--color-purple-strong));
+  background: linear-gradient(90deg, var(--color-blue), var(--color-purple-strong));
 }
 
 .modeGrid {
@@ -403,24 +396,32 @@
 
 .modeButton,
 .modeButtonActive {
-  display: flex;
-  min-height: 72px;
-  align-items: flex-start;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
+  display: grid;
+  min-height: 74px;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
+  gap: 5px 10px;
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 13px;
   padding: 12px;
   color: var(--color-text);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.035);
   cursor: not-allowed;
   text-align: left;
 }
 
 .modeButtonActive {
   border-color: var(--color-border-strong);
-  background: rgba(155, 77, 255, 0.16);
+  background: rgba(126, 77, 255, 0.16);
+}
+
+.modeButton svg,
+.modeButtonActive svg {
+  grid-row: span 2;
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+  opacity: 0.9;
 }
 
 .modeButton span,
@@ -433,7 +434,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 22px;
+  margin-top: 28px;
   color: var(--color-muted);
 }
 
@@ -442,103 +443,25 @@
 }
 
 .fanTrack {
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .fanTrack span {
   width: 70%;
 }
 
-.infoDescription {
-  max-width: 520px;
-  margin: 0 0 14px;
-  color: var(--color-muted);
-  line-height: 1.55;
-}
-
-.infoList {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.infoList li {
-  color: var(--color-text);
-}
-
-.infoList li::before {
-  margin-right: 8px;
-  color: var(--color-cyan);
-  content: ">";
-}
-
-.actionStrip {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  padding: 12px;
-}
-
-.actionToggle,
-.advancedButton {
-  display: flex;
-  min-height: 58px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 12px 16px;
-  color: var(--color-text);
-  background: rgba(255, 255, 255, 0.04);
-  cursor: not-allowed;
-}
-
-.actionToggle span,
-.advancedButton {
-  color: var(--color-muted);
-}
-
-.actionToggle strong {
-  color: var(--color-text);
-}
-
-.switchOn,
-.switchOff {
-  width: 38px;
-  height: 22px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.16);
-}
-
-.switchOn {
-  background: linear-gradient(90deg, var(--color-purple-strong), var(--color-cyan));
-  box-shadow: 0 0 18px rgba(185, 104, 255, 0.42);
-}
-
-@keyframes fanPulse {
-  50% {
-    transform: scale(1.08) rotate(22deg);
+@media (max-width: 1500px) {
+  .performance {
+    height: auto;
+    min-height: 100%;
+    overflow: auto;
   }
-}
 
-@media (max-width: 1450px) {
   .profileGrid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .supportGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .profileInfoCard {
-    grid-column: auto;
-  }
-
-  .actionStrip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -556,8 +479,7 @@
   }
 
   .profileGrid,
-  .supportGrid,
-  .actionStrip {
+  .supportGrid {
     grid-template-columns: 1fr;
   }
 

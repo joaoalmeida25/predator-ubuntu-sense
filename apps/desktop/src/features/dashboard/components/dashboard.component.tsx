@@ -2,9 +2,7 @@ import type { ReactElement } from "react";
 
 import {
   dashboardPerformanceMetrics,
-  dashboardPowerMock,
-  dashboardQuickActions,
-  dashboardTemperatureMetrics,
+  dashboardSystemMetrics,
 } from "../dashboard.mock";
 import { useDashboardStatus } from "../hooks/use-dashboard-status/use-dashboard-status.hook";
 import type { DashboardStatusData } from "../hooks/use-dashboard-status/use-dashboard-status.types";
@@ -18,11 +16,11 @@ const loadingStatusData: DashboardStatusData = {
 
 const deviceSpecs: DeviceOverviewSpec[] = [
   { label: "OS", value: "Ubuntu 24.04 LTS" },
-  { label: "CPU", value: "Intel Core i9 class" },
-  { label: "GPU", value: "NVIDIA GeForce RTX" },
-  { label: "RAM", value: "32 GB DDR5" },
+  { label: "CPU", value: "Intel® Core™ i9-13900HX" },
+  { label: "GPU", value: "NVIDIA® GeForce RTX 4080" },
+  { label: "RAM", value: "32 GB DDR5 5600 MHz" },
   { label: "Storage", value: "2 TB PCIe Gen4 SSD" },
-  { label: "Display", value: "16 inch WQXGA 240Hz" },
+  { label: "Display", value: "16\" WQXGA 240Hz" },
 ];
 
 export const Dashboard = (): ReactElement => {
@@ -43,9 +41,7 @@ export const Dashboard = (): ReactElement => {
       error={statusState.error}
       deviceSpecs={deviceSpecs}
       performanceMetrics={dashboardPerformanceMetrics}
-      temperatureMetrics={dashboardTemperatureMetrics}
-      power={dashboardPowerMock}
-      quickActions={dashboardQuickActions}
+      systemMetrics={dashboardSystemMetrics}
       onRefresh={handleRefresh}
     />
   );

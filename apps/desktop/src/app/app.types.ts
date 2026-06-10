@@ -11,7 +11,6 @@ export type AppPageId =
 export interface AppNavigationItem {
   id: AppPageId;
   label: string;
-  icon: string;
   isEnabled: boolean;
   statusLabel?: string;
 }

@@ -1,0 +1,31 @@
+<svg width="560" height="230" viewBox="0 0 560 230" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="body" x1="80" y1="48" x2="490" y2="184" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#161B2B"/>
+      <stop offset="0.5" stop-color="#0B0E18"/>
+      <stop offset="1" stop-color="#1B1228"/>
+    </linearGradient>
+    <linearGradient id="heat" x1="154" y1="92" x2="404" y2="126" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#29D9FF"/>
+      <stop offset="0.48" stop-color="#B866FF"/>
+      <stop offset="1" stop-color="#FF6B3D"/>
+    </linearGradient>
+    <filter id="glow" x="0" y="0" width="560" height="230" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feBlend in="SourceGraphic" in2="blur" mode="screen"/>
+    </filter>
+  </defs>
+  <ellipse cx="280" cy="190" rx="214" ry="20" fill="#8B5CF6" opacity="0.22" filter="url(#glow)"/>
+  <path d="M82 60L478 44L520 164L42 176L82 60Z" fill="url(#body)" stroke="#354263" stroke-width="2"/>
+  <path d="M123 83L438 72L459 146L100 155L123 83Z" fill="#070A12" stroke="#202A42"/>
+  <circle cx="174" cy="121" r="43" fill="#080B16" stroke="#293555" stroke-width="8"/>
+  <circle cx="174" cy="121" r="27" fill="#0D1220" stroke="#B866FF" stroke-width="8" filter="url(#glow)"/>
+  <circle cx="395" cy="113" r="43" fill="#080B16" stroke="#293555" stroke-width="8"/>
+  <circle cx="395" cy="113" r="27" fill="#0D1220" stroke="#29D9FF" stroke-width="8" filter="url(#glow)"/>
+  <path d="M204 118C242 94 291 92 363 111" stroke="url(#heat)" stroke-width="9" stroke-linecap="round" filter="url(#glow)"/>
+  <path d="M210 138C270 122 313 135 357 126" stroke="#B866FF" stroke-width="5" stroke-linecap="round" opacity="0.85"/>
+  <path d="M238 86H329V151H238V86Z" fill="#111827" stroke="#465274"/>
+  <path d="M256 100H311V134H256V100Z" fill="#050712" stroke="#884DFF"/>
+  <path d="M71 78C106 102 108 135 67 163M489 66C449 94 451 123 503 152" stroke="#29D9FF" stroke-opacity="0.35" stroke-width="2"/>
+  <path d="M130 177L445 166" stroke="#B866FF" stroke-opacity="0.35" stroke-width="2"/>
+</svg>

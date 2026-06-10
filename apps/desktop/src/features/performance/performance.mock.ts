@@ -7,13 +7,19 @@ export type PerformanceProfileTone =
   | "performanceTone"
   | "turbo";
 
+export type PerformanceProfileIconId =
+  | "leaf"
+  | "waves"
+  | "scale"
+  | "gauge"
+  | "swirl";
+
 export interface PerformanceProfileVisual {
   id: PerformanceProfileId;
   title: string;
   description: string;
-  iconLabel: string;
+  iconId: PerformanceProfileIconId;
   tone: PerformanceProfileTone;
-  infoBullets: string[];
 }
 
 export interface PerformanceSupportMetric {
@@ -31,41 +37,36 @@ export const performanceProfileVisuals: Record<
     id: "low-power",
     title: "Eco",
     description: "Maximize battery life and reduce noise.",
-    iconLabel: "Leaf",
+    iconId: "leaf",
     tone: "eco",
-    infoBullets: ["Lower power target", "Reduced background noise", "Battery-first tuning"],
   },
   quiet: {
     id: "quiet",
     title: "Quiet",
     description: "Whisper-quiet operation for light tasks.",
-    iconLabel: "Waves",
+    iconId: "waves",
     tone: "quiet",
-    infoBullets: ["Acoustic priority", "Conservative fan curve", "Light workload profile"],
   },
   balanced: {
     id: "balanced",
     title: "Balanced",
     description: "Optimal balance between performance and noise.",
-    iconLabel: "Scale",
+    iconId: "scale",
     tone: "balanced",
-    infoBullets: ["Balanced performance and acoustics", "Intelligent fan curve", "Optimized power limits"],
   },
   "balanced-performance": {
     id: "balanced-performance",
     title: "Performance",
     description: "Boost performance for demanding applications.",
-    iconLabel: "Gauge",
+    iconId: "gauge",
     tone: "performanceTone",
-    infoBullets: ["Higher sustained clocks", "More aggressive cooling", "Demanding application bias"],
   },
   performance: {
     id: "performance",
     title: "Turbo",
     description: "Maximum performance for extreme workloads.",
-    iconLabel: "Swirl",
+    iconId: "swirl",
     tone: "turbo",
-    infoBullets: ["Maximum platform profile", "Peak cooling behavior", "Extreme workload bias"],
   },
 };
 
@@ -75,7 +76,7 @@ export const systemPerformanceMetrics: PerformanceSupportMetric[] = [
 ];
 
 export const thermalOverviewMetrics: PerformanceSupportMetric[] = [
-  { label: "CPU", value: "78 C", detail: "Placeholder sensor", percent: 78 },
-  { label: "GPU", value: "72 C", detail: "Placeholder sensor", percent: 72 },
-  { label: "System", value: "45 C", detail: "Placeholder sensor", percent: 45 },
+  { label: "CPU", value: "78 °C", detail: "Placeholder sensor", percent: 78 },
+  { label: "GPU", value: "72 °C", detail: "Placeholder sensor", percent: 72 },
+  { label: "System", value: "45 °C", detail: "Placeholder sensor", percent: 45 },
 ];

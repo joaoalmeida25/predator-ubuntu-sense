@@ -1,8 +1,4 @@
-import type {
-  DashboardMetric,
-  DashboardPowerMock,
-  DashboardQuickAction,
-} from "../dashboard.mock";
+import type { DashboardMetric } from "../dashboard.mock";
 import type { DeviceOverviewSpec } from "./device-overview-card/device-overview-card.types";
 
 export interface DashboardViewProps {
@@ -12,8 +8,6 @@ export interface DashboardViewProps {
   error: string | null;
   deviceSpecs: DeviceOverviewSpec[];
   performanceMetrics: DashboardMetric[];
-  temperatureMetrics: DashboardMetric[];
-  power: DashboardPowerMock;
-  quickActions: DashboardQuickAction[];
+  systemMetrics: DashboardMetric[];
   onRefresh: () => void;
 }

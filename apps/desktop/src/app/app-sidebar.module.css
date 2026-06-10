@@ -7,51 +7,48 @@
   min-height: 0;
   flex-direction: column;
   gap: 24px;
-  padding: 22px;
-  background: rgba(4, 3, 12, 0.76);
-  backdrop-filter: blur(24px);
+  padding: 24px 20px 18px;
+  background: rgba(2, 4, 14, 0.82);
+  backdrop-filter: blur(28px);
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 14px;
-  min-height: 54px;
+  min-height: 62px;
 }
 
 .brandMark {
-  display: grid;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  border: 1px solid rgba(185, 104, 255, 0.4);
-  border-radius: 14px;
-  color: #ffffff;
-  background: linear-gradient(135deg, #5c1dff, #b866ff);
-  box-shadow: 0 0 28px rgba(155, 77, 255, 0.36);
-  font-weight: 900;
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 18px rgba(167, 100, 255, 0.48));
 }
 
 .brandTitle,
 .brandSubtitle,
 .deviceName,
-.deviceModel,
-.footer {
+.deviceModel {
   margin: 0;
 }
 
 .brandTitle {
-  font-size: 18px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+  line-height: 1;
   text-transform: uppercase;
 }
 
 .brandSubtitle {
+  margin-top: 5px;
   color: var(--color-purple-strong);
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.09em;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  line-height: 1;
   text-transform: uppercase;
 }
 
@@ -59,7 +56,7 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
 }
 
 .navItem,
@@ -70,58 +67,63 @@
   align-items: center;
   gap: 12px;
   border: 1px solid transparent;
-  border-radius: 14px;
-  padding: 12px 14px;
+  border-radius: 13px;
+  padding: 11px 12px;
   color: var(--color-muted);
   background: transparent;
   cursor: pointer;
   text-align: left;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease, transform 160ms ease;
 }
 
 .navItem:hover:not(:disabled) {
   border-color: var(--color-border);
   color: var(--color-text);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.035);
+  transform: translateX(2px);
 }
 
 .navItemActive {
-  border-color: rgba(185, 104, 255, 0.55);
+  border-color: rgba(126, 99, 255, 0.56);
   color: #ffffff;
-  background: linear-gradient(90deg, rgba(155, 77, 255, 0.58), rgba(155, 77, 255, 0.16));
-  box-shadow: 0 0 34px rgba(155, 77, 255, 0.18);
+  background: linear-gradient(90deg, rgba(126, 77, 255, 0.5), rgba(47, 141, 255, 0.12));
+  box-shadow: inset 3px 0 0 var(--color-purple-strong), 0 0 34px rgba(89, 72, 255, 0.2);
 }
 
 .navItem:disabled {
   cursor: not-allowed;
-  opacity: 0.48;
+  opacity: 0.5;
 }
 
 .navIcon {
   display: grid;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  color: var(--color-cyan);
-  background: rgba(255, 255, 255, 0.04);
-  font-size: 11px;
-  font-weight: 900;
+  border-radius: 9px;
+  color: currentColor;
+}
+
+.navIcon svg {
+  width: 21px;
+  height: 21px;
+  fill: currentColor;
 }
 
 .navLabel {
   min-width: 0;
   overflow: hidden;
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .navStatus {
   color: var(--color-purple-strong);
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -130,57 +132,67 @@
   overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: 20px;
-  padding: 18px;
-  background: var(--color-panel);
+  padding: 16px;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(126, 77, 255, 0.22), transparent 48%),
+    rgba(10, 13, 28, 0.68);
   box-shadow: var(--shadow-panel);
 }
 
 .deviceGlow {
   position: absolute;
-  inset: auto -20px 20px;
-  height: 90px;
-  background: radial-gradient(circle, rgba(155, 77, 255, 0.35), transparent 68%);
-  filter: blur(10px);
+  inset: auto -24px 12px;
+  height: 98px;
+  background: radial-gradient(circle, rgba(126, 77, 255, 0.34), transparent 68%);
+  filter: blur(12px);
 }
 
-.deviceBadge {
+.deviceImage {
   position: relative;
-  display: grid;
-  width: 74px;
-  height: 48px;
-  margin: 0 auto 16px;
-  place-items: center;
-  border: 1px solid rgba(41, 217, 255, 0.28);
-  border-radius: 10px 10px 4px 4px;
-  color: #ffffff;
-  background: linear-gradient(135deg, rgba(155, 77, 255, 0.34), rgba(41, 217, 255, 0.12));
-  box-shadow: 0 16px 42px rgba(155, 77, 255, 0.24);
-  font-weight: 900;
+  display: block;
+  width: 100%;
+  max-width: 176px;
+  margin: -4px auto 8px;
+  filter: drop-shadow(0 22px 30px rgba(0, 0, 0, 0.34));
 }
 
 .deviceName {
   position: relative;
   color: var(--color-text);
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 900;
 }
 
 .deviceModel,
-.footer {
+.osRow {
   position: relative;
   margin-top: 4px;
   color: var(--color-muted);
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
+.osRow,
 .onlineRow {
-  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
   margin-top: 14px;
+}
+
+.ubuntuDot {
+  width: 12px;
+  height: 12px;
+  border: 3px solid #ff6a2b;
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(255, 106, 43, 0.46);
+}
+
+.onlineRow {
+  position: relative;
   color: #32f597;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 900;
 }
 
 .onlineDot {
@@ -191,14 +203,10 @@
   box-shadow: 0 0 16px currentColor;
 }
 
-.footer {
-  padding-top: 6px;
-}
-
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
   .sidebar {
     align-items: center;
-    padding: 18px 12px;
+    padding: 20px 12px;
   }
 
   .brandTitle,
@@ -207,13 +215,18 @@
   .navStatus,
   .deviceName,
   .deviceModel,
-  .onlineRow,
-  .footer {
+  .osRow,
+  .onlineRow {
     display: none;
   }
 
   .brand {
     justify-content: center;
+  }
+
+  .brandMark {
+    width: 46px;
+    height: 46px;
   }
 
   .navItem,
@@ -224,14 +237,12 @@
   }
 
   .deviceCard {
-    padding: 12px;
+    padding: 10px;
   }
 
-  .deviceBadge {
-    width: 46px;
-    height: 34px;
-    margin-bottom: 0;
-    font-size: 12px;
+  .deviceImage {
+    width: 52px;
+    margin: 0;
   }
 }
 
@@ -251,8 +262,7 @@
     flex-direction: row;
   }
 
-  .deviceCard,
-  .footer {
+  .deviceCard {
     display: none;
   }
 }

@@ -21,22 +21,16 @@ const pageTitles: Record<AppPageId, string> = {
 export const AppHeader = ({ activePage }: AppHeaderProps): ReactElement => {
   return (
     <header className={styles.header}>
-      <div className={styles.contextGroup}>
-        <span className={styles.pill}>AI Assistant</span>
-        <span className={styles.separator} />
-        <span className={styles.contextLabel}>Scenario</span>
+      <div className={styles.breadcrumb}>
+        <span>Predator Ubuntu Sense</span>
         <strong>{pageTitles[activePage]}</strong>
       </div>
 
-      <div className={styles.actionGroup} aria-label="Application status">
-        <span className={styles.statusChip}>Fan Auto</span>
-        <span className={styles.statusChip}>Ubuntu 24.04 LTS</span>
-        <button type="button" className={styles.iconButton} disabled>
-          Alerts
-        </button>
-        <button type="button" className={styles.iconButton} disabled>
-          Settings
-        </button>
+      <div className={styles.statusArea} aria-label="Application status">
+        <span className={styles.modeChip}>
+          <i />
+          Balanced Mode
+        </span>
       </div>
     </header>
   );
