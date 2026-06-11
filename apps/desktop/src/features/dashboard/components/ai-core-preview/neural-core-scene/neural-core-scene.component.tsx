@@ -125,10 +125,10 @@ export const NeuralCoreScene = (): ReactElement => {
     const elapsedTime = clock.getElapsedTime();
 
     if (networkRef.current) {
-      networkRef.current.rotation.y = elapsedTime * 0.032;
-      networkRef.current.rotation.x = Math.sin(elapsedTime * 0.12) * 0.042;
-      networkRef.current.rotation.z = Math.cos(elapsedTime * 0.08) * 0.018;
-      networkRef.current.scale.setScalar(1 + Math.sin(elapsedTime * 0.31) * 0.005);
+      networkRef.current.rotation.y = elapsedTime * 0.037;
+      networkRef.current.rotation.x = Math.sin(elapsedTime * 0.14) * 0.044;
+      networkRef.current.rotation.z = Math.cos(elapsedTime * 0.09) * 0.019;
+      networkRef.current.scale.setScalar(0.95 + Math.sin(elapsedTime * 0.31) * 0.004);
     }
 
     if (baseRef.current) {

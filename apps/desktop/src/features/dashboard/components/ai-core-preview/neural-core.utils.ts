@@ -16,11 +16,11 @@ import type {
   NeuralCoreVector3,
 } from "./neural-core-scene.types";
 
-const NEURAL_NODE_COUNT = 640;
-const AMBIENT_PARTICLE_COUNT = 300;
-const ACTIVE_PULSE_COUNT = 76;
-const MAX_CONNECTIONS_PER_MICRO_NODE = 6;
-const MAX_CONNECTIONS_PER_STANDARD_NODE = 8;
+const NEURAL_NODE_COUNT = 720;
+const AMBIENT_PARTICLE_COUNT = 315;
+const ACTIVE_PULSE_COUNT = 84;
+const MAX_CONNECTIONS_PER_MICRO_NODE = 7;
+const MAX_CONNECTIONS_PER_STANDARD_NODE = 9;
 const MAX_CONNECTIONS_PER_HUB_NODE = 13;
 const CONNECTION_THRESHOLD = 0.55;
 const HUB_CONNECTION_THRESHOLD = 1.38;
@@ -81,9 +81,9 @@ const getOrganicJitter = (x: number, y: number, z: number): NeuralCoreVector3 =>
 };
 
 const getBrainCandidate = (random: SeededRandom): BrainCandidate | null => {
-  const rawX = (random.next() * 2 - 1) * 2.2;
-  const rawY = (random.next() * 2 - 1) * 1.38;
-  const rawZ = (random.next() * 2 - 1) * 1.18;
+  const rawX = (random.next() * 2 - 1) * 2.12;
+  const rawY = (random.next() * 2 - 1) * 1.32;
+  const rawZ = (random.next() * 2 - 1) * 1.12;
   const jitter = getOrganicJitter(rawX, rawY, rawZ);
   const asymmetry = Math.sin(rawX * 2.1 + rawZ * 1.8) * 0.075 + Math.cos(rawY * 3.2) * 0.035;
   const position: NeuralCoreVector3 = [rawX + jitter[0] + asymmetry, rawY + jitter[1], rawZ + jitter[2]];
@@ -101,7 +101,7 @@ const getBrainCandidate = (random: SeededRandom): BrainCandidate | null => {
   const edgeStrength = clamp(silhouette, 0, 1);
   const stemStrength = 1 - clamp(lowerStem, 0, 1);
   const corticalBias = edgeStrength > 0.64 ? 0.22 : 0;
-  const acceptance = 0.34 + centerStrength * 0.5 + edgeStrength * 0.2 + stemStrength * 0.2 + corticalBias;
+  const acceptance = 0.36 + centerStrength * 0.54 + edgeStrength * 0.23 + stemStrength * 0.22 + corticalBias;
 
   if (random.next() > acceptance) {
     return null;
@@ -260,9 +260,9 @@ const createNodeClouds = (nodes: NeuralCoreNode[]): NeuralCorePointCloud[] => {
   const outerNodes = nodes.filter((node) => node.kind === "standard" && node.isOuter);
 
   return [
-    createPointCloud("micro", microNodes, 0.0074, 0.96),
-    createPointCloud("standard", standardNodes, 0.0115, 0.95),
-    createPointCloud("outer", outerNodes, 0.014, 0.98),
+    createPointCloud("micro", microNodes, 0.0076, 1),
+    createPointCloud("standard", standardNodes, 0.0118, 0.98),
+    createPointCloud("outer", outerNodes, 0.0142, 1),
   ];
 };
 
@@ -372,13 +372,13 @@ const createCoreConnections = (nodes: NeuralCoreNode[]): NeuralCoreConnection[] 
 const getBucketOpacity = (bucket: NeuralCoreConnectionBucket): number => {
   switch (bucket) {
     case "hub":
-      return 0.21;
+      return 0.225;
     case "high":
-      return 0.24;
+      return 0.255;
     case "medium":
-      return 0.13;
+      return 0.145;
     case "low":
-      return 0.048;
+      return 0.05;
   }
 };
 
@@ -498,7 +498,7 @@ const createPulses = (connections: NeuralCoreConnection[], pulseCount: number): 
     return {
       id: index,
       routes: createPulseRoutes(sourceConnections, index, 5),
-      speed: 0.18 + random.next() * 0.2,
+      speed: 0.2 + random.next() * 0.22,
       phase: random.next() * 5,
       color: getPulseColor(connection, index),
     };
