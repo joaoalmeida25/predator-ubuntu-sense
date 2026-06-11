@@ -93,9 +93,10 @@ const updatePulseAttributes = (
     const route = pulse.routes[routeIndex];
     const ease = progress * progress * (3 - 2 * progress);
     const fade = Math.sin(progress * Math.PI);
-    const shimmer = Math.sin((elapsedTime * 2.2 + pulse.phase) * Math.PI) * 0.009;
+    const routeCenterBoost = 1 - Math.abs(progress - 0.5) * 2;
+    const shimmer = Math.sin((elapsedTime * 2.2 + pulse.phase) * Math.PI) * 0.011;
     const color = getPulseRgb(pulse.color);
-    const intensity = 0.28 + fade * 1.52;
+    const intensity = 0.18 + Math.pow(fade, 0.72) * 1.82 + routeCenterBoost * 0.12;
 
     positions[offset] = route.from[0] + (route.to[0] - route.from[0]) * ease + shimmer;
     positions[offset + 1] = route.from[1] + (route.to[1] - route.from[1]) * ease;
@@ -133,7 +134,7 @@ export const NeuralCoreScene = (): ReactElement => {
 
     if (baseRef.current) {
       baseRef.current.rotation.y = elapsedTime * 0.035;
-      baseRef.current.scale.setScalar(1 + Math.sin(elapsedTime * 0.72) * 0.018);
+      baseRef.current.scale.setScalar(1 + Math.sin(elapsedTime * 0.72) * 0.014);
     }
 
     if (ringRef.current) {
@@ -141,11 +142,11 @@ export const NeuralCoreScene = (): ReactElement => {
     }
 
     if (hubRef.current) {
-      animatePulseGroup(hubRef.current, elapsedTime, 0.062);
+      animatePulseGroup(hubRef.current, elapsedTime, 0.058);
     }
 
     if (coreRef.current) {
-      animatePulseGroup(coreRef.current, elapsedTime, 0.052);
+      animatePulseGroup(coreRef.current, elapsedTime, 0.06);
     }
 
     if (particlePositionRef.current) {

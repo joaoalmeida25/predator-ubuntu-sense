@@ -74,34 +74,35 @@ const getEllipsoidValue = (
 
 const getOrganicJitter = (x: number, y: number, z: number): NeuralCoreVector3 => {
   return [
-    Math.sin(y * 4.1 + z * 2.2) * 0.045 + Math.cos(z * 3.7) * 0.025,
-    Math.sin(x * 3.6 + z * 2.8) * 0.04,
-    Math.cos(x * 2.9 + y * 3.4) * 0.055,
+    Math.sin(y * 4.1 + z * 2.2) * 0.036 + Math.cos(z * 3.7) * 0.02,
+    Math.sin(x * 3.6 + z * 2.8) * 0.036,
+    Math.cos(x * 2.9 + y * 3.4) * 0.046,
   ];
 };
 
 const getBrainCandidate = (random: SeededRandom): BrainCandidate | null => {
-  const rawX = (random.next() * 2 - 1) * 2.12;
-  const rawY = (random.next() * 2 - 1) * 1.32;
-  const rawZ = (random.next() * 2 - 1) * 1.12;
+  const rawX = (random.next() * 2 - 1) * 1.96;
+  const rawY = (random.next() * 2 - 1) * 1.26;
+  const rawZ = (random.next() * 2 - 1) * 1.04;
   const jitter = getOrganicJitter(rawX, rawY, rawZ);
-  const asymmetry = Math.sin(rawX * 2.1 + rawZ * 1.8) * 0.075 + Math.cos(rawY * 3.2) * 0.035;
+  const asymmetry = Math.sin(rawX * 2.1 + rawZ * 1.8) * 0.055 + Math.cos(rawY * 3.2) * 0.028;
   const position: NeuralCoreVector3 = [rawX + jitter[0] + asymmetry, rawY + jitter[1], rawZ + jitter[2]];
-  const leftLobe = getEllipsoidValue(position, [-0.58, 0.12, 0.02], [1.3, 1.04, 0.92]);
-  const rightLobe = getEllipsoidValue(position, [0.62, 0.08, -0.04], [1.36, 1, 0.94]);
-  const bridge = getEllipsoidValue(position, [0.02, 0.02, 0], [1.02, 0.86, 0.84]);
-  const lowerStem = getEllipsoidValue(position, [0.16, -0.94, 0.02], [0.44, 0.58, 0.36]);
-  const silhouette = Math.min(leftLobe, rightLobe, bridge, lowerStem);
+  const leftLobe = getEllipsoidValue(position, [-0.46, 0.14, 0.02], [1.12, 1.02, 0.82]);
+  const rightLobe = getEllipsoidValue(position, [0.5, 0.1, -0.04], [1.16, 0.98, 0.84]);
+  const bridge = getEllipsoidValue(position, [0.02, 0.04, 0], [0.98, 0.9, 0.78]);
+  const upperCrown = getEllipsoidValue(position, [0, 0.38, -0.02], [1.12, 0.72, 0.76]);
+  const lowerStem = getEllipsoidValue(position, [0.12, -0.86, 0.02], [0.38, 0.52, 0.32]);
+  const silhouette = Math.min(leftLobe, rightLobe, bridge, upperCrown, lowerStem);
 
   if (silhouette > 1) {
     return null;
   }
 
-  const centerStrength = 1 - clamp(bridge, 0, 1);
+  const centerStrength = 1 - clamp(Math.min(bridge, upperCrown), 0, 1);
   const edgeStrength = clamp(silhouette, 0, 1);
   const stemStrength = 1 - clamp(lowerStem, 0, 1);
-  const corticalBias = edgeStrength > 0.64 ? 0.22 : 0;
-  const acceptance = 0.36 + centerStrength * 0.54 + edgeStrength * 0.23 + stemStrength * 0.22 + corticalBias;
+  const corticalBias = edgeStrength > 0.58 ? 0.24 : 0;
+  const acceptance = 0.38 + centerStrength * 0.58 + edgeStrength * 0.25 + stemStrength * 0.2 + corticalBias;
 
   if (random.next() > acceptance) {
     return null;
@@ -164,9 +165,9 @@ const createNode = (index: number, candidate: BrainCandidate, random: SeededRand
   const isOuter = candidate.edgeStrength > 0.72;
   const intensity = kind === "core" ? 1 : kind === "hub" ? 0.74 : isOuter ? 0.6 : 0.42;
   const radius = kind === "core"
-    ? 0.032 + random.next() * 0.006
+    ? 0.03 + random.next() * 0.005
     : kind === "hub"
-      ? 0.017 + random.next() * 0.006
+      ? 0.016 + random.next() * 0.005
       : kind === "standard"
         ? 0.011 + random.next() * 0.004
         : 0.0055 + random.next() * 0.002;
@@ -191,7 +192,7 @@ const createCentralCoreNode = (): NeuralCoreNode => {
     kind: "core",
     isOuter: false,
     intensity: 1,
-    radius: 0.032,
+    radius: 0.03,
     baseScale: 1.02,
     phase: 0.7,
     color: "#e6fbff",
@@ -260,9 +261,9 @@ const createNodeClouds = (nodes: NeuralCoreNode[]): NeuralCorePointCloud[] => {
   const outerNodes = nodes.filter((node) => node.kind === "standard" && node.isOuter);
 
   return [
-    createPointCloud("micro", microNodes, 0.0076, 1),
-    createPointCloud("standard", standardNodes, 0.0118, 0.98),
-    createPointCloud("outer", outerNodes, 0.0142, 1),
+    createPointCloud("micro", microNodes, 0.0077, 1),
+    createPointCloud("standard", standardNodes, 0.012, 0.98),
+    createPointCloud("outer", outerNodes, 0.0144, 1),
   ];
 };
 
@@ -372,13 +373,13 @@ const createCoreConnections = (nodes: NeuralCoreNode[]): NeuralCoreConnection[] 
 const getBucketOpacity = (bucket: NeuralCoreConnectionBucket): number => {
   switch (bucket) {
     case "hub":
-      return 0.225;
+      return 0.24;
     case "high":
-      return 0.255;
+      return 0.27;
     case "medium":
-      return 0.145;
+      return 0.158;
     case "low":
-      return 0.05;
+      return 0.044;
   }
 };
 
@@ -425,8 +426,8 @@ const createParticles = (particleCount: number): NeuralCoreParticle[] => {
 
   return Array.from({ length: particleCount }, (_, index): NeuralCoreParticle => {
     const angle = random.next() * Math.PI * 2;
-    const radius = 1.15 + random.next() * 1.62;
-    const y = (random.next() * 2 - 1) * 1.18;
+    const radius = 1.08 + random.next() * 1.5;
+    const y = (random.next() * 2 - 1) * 1.12;
 
     return {
       id: index,
@@ -453,8 +454,8 @@ const createParticleField = (particles: NeuralCoreParticle[]): NeuralCoreParticl
   return {
     positions,
     colors,
-    size: 0.0072,
-    opacity: 0.34,
+    size: 0.0074,
+    opacity: 0.31,
   };
 };
 
@@ -520,8 +521,8 @@ const createPulseField = (pulses: NeuralCorePulse[]): NeuralCorePulseField => {
   return {
     positions,
     colors,
-    size: 0.031,
-    opacity: 0.98,
+    size: 0.034,
+    opacity: 1,
   };
 };
 
@@ -533,7 +534,7 @@ const createRings = (): NeuralCoreRing[] => {
       tubeRadius: 0.0024,
       rotation: [Math.PI * 0.56, 0.16, Math.PI * 0.08],
       color: "#26d9ff",
-      opacity: 0.2,
+      opacity: 0.22,
       speed: 0.035,
       phase: 0.4,
     },
@@ -543,7 +544,7 @@ const createRings = (): NeuralCoreRing[] => {
       tubeRadius: 0.0022,
       rotation: [Math.PI * 0.36, Math.PI * 0.44, Math.PI * 0.31],
       color: "#8a6dff",
-      opacity: 0.15,
+      opacity: 0.13,
       speed: -0.047,
       phase: 1.8,
     },
@@ -553,7 +554,7 @@ const createRings = (): NeuralCoreRing[] => {
       tubeRadius: 0.0018,
       rotation: [Math.PI * 0.72, Math.PI * 0.2, Math.PI * 0.62],
       color: "#8fdfff",
-      opacity: 0.11,
+      opacity: 0.1,
       speed: 0.024,
       phase: 3.2,
     },

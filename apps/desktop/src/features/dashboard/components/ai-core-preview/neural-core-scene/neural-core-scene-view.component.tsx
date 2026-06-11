@@ -25,19 +25,19 @@ export const NeuralCoreSceneView = ({
       <group ref={baseRef} position={[0, -1.74, 0]}>
         <mesh rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[1.48, 0.0065, 8, 192]} />
-          <meshBasicMaterial color="#26d9ff" transparent opacity={0.3} blending={AdditiveBlending} depthWrite={false} />
+          <meshBasicMaterial color="#26d9ff" transparent opacity={0.34} blending={AdditiveBlending} depthWrite={false} />
         </mesh>
         <mesh rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[0.88, 0.0048, 8, 160]} />
-          <meshBasicMaterial color="#8a6dff" transparent opacity={0.2} blending={AdditiveBlending} depthWrite={false} />
+          <meshBasicMaterial color="#8a6dff" transparent opacity={0.16} blending={AdditiveBlending} depthWrite={false} />
         </mesh>
         <mesh rotation={[Math.PI / 2, 0, 0]}>
           <circleGeometry args={[1.12, 96]} />
-          <meshBasicMaterial color="#26d9ff" transparent opacity={0.045} blending={AdditiveBlending} depthWrite={false} />
+          <meshBasicMaterial color="#26d9ff" transparent opacity={0.052} blending={AdditiveBlending} depthWrite={false} />
         </mesh>
         <mesh position={[0, 0.32, 0]}>
           <coneGeometry args={[0.78, 1.72, 72, 1, true]} />
-          <meshBasicMaterial color="#26d9ff" transparent opacity={0.04} blending={AdditiveBlending} depthWrite={false} />
+          <meshBasicMaterial color="#26d9ff" transparent opacity={0.035} blending={AdditiveBlending} depthWrite={false} />
         </mesh>
       </group>
 
@@ -129,11 +129,11 @@ export const NeuralCoreSceneView = ({
           >
             <mesh>
               <sphereGeometry args={[hub.radius, 12, 12]} />
-              <meshBasicMaterial color={hub.color} transparent opacity={0.86} blending={AdditiveBlending} depthWrite={false} />
+              <meshBasicMaterial color={hub.color} transparent opacity={0.9} blending={AdditiveBlending} depthWrite={false} />
             </mesh>
-            <mesh scale={1.5}>
+            <mesh scale={1.62}>
               <sphereGeometry args={[hub.radius, 12, 12]} />
-              <meshBasicMaterial color={hub.color} transparent opacity={0.13} blending={AdditiveBlending} depthWrite={false} />
+              <meshBasicMaterial color={hub.color} transparent opacity={0.12} blending={AdditiveBlending} depthWrite={false} />
             </mesh>
           </group>
         ))}
@@ -149,15 +149,15 @@ export const NeuralCoreSceneView = ({
           >
             <mesh>
               <sphereGeometry args={[node.radius, 16, 16]} />
-              <meshBasicMaterial color={node.color} transparent opacity={0.94} blending={AdditiveBlending} depthWrite={false} />
+              <meshBasicMaterial color={node.color} transparent opacity={0.98} blending={AdditiveBlending} depthWrite={false} />
             </mesh>
             <mesh scale={1.9}>
               <sphereGeometry args={[node.radius, 16, 16]} />
-              <meshBasicMaterial color="#26d9ff" transparent opacity={0.2} blending={AdditiveBlending} depthWrite={false} />
+              <meshBasicMaterial color="#26d9ff" transparent opacity={0.24} blending={AdditiveBlending} depthWrite={false} />
             </mesh>
-            <mesh scale={2.8}>
+            <mesh scale={2.65}>
               <sphereGeometry args={[node.radius, 16, 16]} />
-              <meshBasicMaterial color="#8a6dff" transparent opacity={0.075} blending={AdditiveBlending} depthWrite={false} />
+              <meshBasicMaterial color="#8a6dff" transparent opacity={0.085} blending={AdditiveBlending} depthWrite={false} />
             </mesh>
           </group>
         ))}

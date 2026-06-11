@@ -16,11 +16,11 @@ export const NeuralCoreCanvasView = ({
         fallback={fallback}
         gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
       >
-        <fog attach="fog" args={["#050816", 4.1, 7.2]} />
-        <ambientLight intensity={0.64} />
-        <pointLight position={[2.8, 2.1, 3.1]} color="#26d9ff" intensity={1.3} />
-        <pointLight position={[-2.4, -1.5, 2.6]} color="#a764ff" intensity={1.1} />
-        <pointLight position={[0.2, 0.1, 1.2]} color="#d9f7ff" intensity={0.5} />
+        <fog attach="fog" args={["#050816", 3.9, 6.8]} />
+        <ambientLight intensity={0.58} />
+        <pointLight position={[2.8, 2.1, 3.1]} color="#26d9ff" intensity={1.45} />
+        <pointLight position={[-2.4, -1.5, 2.6]} color="#8a6dff" intensity={0.9} />
+        <pointLight position={[0.2, 0.1, 1.2]} color="#d9f7ff" intensity={0.68} />
         <NeuralCoreScene />
       </Canvas>
     </div>
