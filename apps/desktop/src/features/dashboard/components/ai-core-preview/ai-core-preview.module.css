@@ -54,65 +54,33 @@
   perspective: 980px;
 }
 
-.orbitOuter,
-.orbitMiddle,
-.orbitTilt,
 .baseRing,
 .baseRingTwo,
 .coreHalo,
 .scanlines,
 .network,
 .energyColumn,
-.particleOne,
-.particleTwo,
-.particleThree,
 .callout {
   position: absolute;
 }
 
-.orbitOuter,
-.orbitMiddle,
-.orbitTilt {
-  border: 1px solid rgba(167, 100, 255, 0.26);
-  border-radius: 50%;
-  box-shadow: 0 0 28px rgba(126, 77, 255, 0.14);
-  animation: rotateCore 18s linear infinite;
-}
-
-.orbitOuter {
-  width: min(46vw, 430px);
-  height: min(46vw, 430px);
-  transform: rotateX(66deg) rotateZ(12deg);
-}
-
-.orbitMiddle {
-  width: min(39vw, 360px);
-  height: min(39vw, 360px);
-  border-color: rgba(38, 217, 255, 0.24);
-  animation-direction: reverse;
-  transform: rotateX(58deg) rotateZ(-30deg);
-}
-
-.orbitTilt {
-  width: min(34vw, 315px);
-  height: min(34vw, 315px);
-  transform: rotateX(76deg) rotateY(24deg) rotateZ(50deg);
-}
-
 .coreHalo {
+  z-index: 2;
   width: min(34vw, 330px);
   height: min(34vw, 330px);
   border-radius: 50%;
   background:
-    radial-gradient(circle, rgba(255, 255, 255, 0.7) 0 2%, rgba(38, 217, 255, 0.65) 3% 5%, transparent 6%),
-    radial-gradient(circle, rgba(126, 77, 255, 0.38), transparent 64%);
-  filter: blur(0.15px);
+    radial-gradient(circle, rgba(255, 255, 255, 0.36) 0 2%, rgba(38, 217, 255, 0.34) 3% 5%, transparent 7%),
+    radial-gradient(circle, rgba(126, 77, 255, 0.26), transparent 64%);
+  opacity: 0.44;
+  mix-blend-mode: screen;
   animation: pulseCore 4s ease-in-out infinite;
 }
 
 .scanlines {
+  z-index: 3;
   inset: 14%;
-  opacity: 0.18;
+  opacity: 0.08;
   background: repeating-linear-gradient(0deg, transparent 0 9px, rgba(255, 255, 255, 0.18) 10px 11px);
   mask-image: radial-gradient(circle, black 36%, transparent 72%);
 }
@@ -124,6 +92,19 @@
   filter: drop-shadow(0 0 12px rgba(126, 77, 255, 0.95));
   transform-style: preserve-3d;
   animation: floatNetwork 6s ease-in-out infinite;
+}
+
+.fallbackCore {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.fallbackCore .network {
+  position: relative;
+  width: min(100%, 390px);
+  height: min(100%, 390px);
 }
 
 .neuralLine {
@@ -147,67 +128,41 @@
 }
 
 .energyColumn {
+  z-index: 2;
   bottom: 82px;
   width: 74px;
   height: min(25vw, 240px);
-  background: linear-gradient(180deg, transparent, rgba(38, 217, 255, 0.6), rgba(167, 100, 255, 0.18), transparent);
+  background: linear-gradient(180deg, transparent, rgba(38, 217, 255, 0.5), rgba(167, 100, 255, 0.18), transparent);
   filter: blur(8px);
+  opacity: 0.42;
   transform: perspective(400px) rotateX(22deg);
-  opacity: 0.8;
   animation: pulseColumn 3.2s ease-in-out infinite;
 }
 
 .baseRing,
 .baseRingTwo {
+  z-index: 2;
   bottom: 36px;
   width: min(35vw, 330px);
   height: 70px;
   border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(126, 77, 255, 0.5), transparent 68%);
-  box-shadow: 0 0 38px rgba(126, 77, 255, 0.68), inset 0 0 22px rgba(38, 217, 255, 0.36);
+  background: radial-gradient(ellipse, rgba(126, 77, 255, 0.42), transparent 68%);
+  box-shadow: 0 0 34px rgba(126, 77, 255, 0.58), inset 0 0 18px rgba(38, 217, 255, 0.34);
+  opacity: 0.44;
   animation: basePulse 3s ease-in-out infinite;
 }
 
 .baseRing {
-  border: 2px solid rgba(167, 100, 255, 0.58);
+  border: 1px solid rgba(167, 100, 255, 0.48);
 }
 
 .baseRingTwo {
   bottom: 54px;
   width: min(43vw, 400px);
   height: 92px;
-  border: 1px solid rgba(38, 217, 255, 0.36);
-  opacity: 0.72;
+  border: 1px solid rgba(38, 217, 255, 0.3);
+  opacity: 0.34;
   animation-delay: -1.5s;
-}
-
-.particleOne,
-.particleTwo,
-.particleThree {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--color-cyan);
-  box-shadow: 0 0 18px currentColor;
-  animation: particleDrift 7s ease-in-out infinite;
-}
-
-.particleOne {
-  top: 32%;
-  left: 28%;
-}
-
-.particleTwo {
-  top: 48%;
-  right: 23%;
-  color: var(--color-purple-strong);
-  animation-delay: -2s;
-}
-
-.particleThree {
-  bottom: 32%;
-  left: 48%;
-  animation-delay: -4s;
 }
 
 .callout {
@@ -330,27 +285,17 @@
   font-size: 12px;
 }
 
-@keyframes rotateCore {
-  from {
-    rotate: 0deg;
-  }
-
-  to {
-    rotate: 360deg;
-  }
-}
-
 @keyframes pulseCore {
   50% {
     transform: scale(1.04);
-    opacity: 0.86;
+    opacity: 0.66;
   }
 }
 
 @keyframes pulseColumn {
   50% {
     transform: perspective(400px) rotateX(22deg) scaleY(1.1);
-    opacity: 0.56;
+    opacity: 0.24;
   }
 }
 
@@ -375,13 +320,6 @@
 @keyframes basePulse {
   50% {
     transform: scaleX(1.07);
-  }
-}
-
-@keyframes particleDrift {
-  50% {
-    transform: translate3d(24px, -22px, 0);
-    opacity: 0.44;
   }
 }
 

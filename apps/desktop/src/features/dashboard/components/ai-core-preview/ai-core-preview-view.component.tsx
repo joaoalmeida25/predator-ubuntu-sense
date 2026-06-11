@@ -6,6 +6,7 @@ import type {
   AiCorePreviewNode,
   AiCorePreviewViewProps,
 } from "./ai-core-preview-view.types";
+import { NeuralCoreCanvas } from "./neural-core-canvas/neural-core-canvas.component";
 
 const getNodeStyle = (node: AiCorePreviewNode): CSSProperties => {
   return {
@@ -32,42 +33,16 @@ export const AiCorePreviewView = ({
           <TelemetryCallout key={callout.label} {...callout} />
         ))}
 
-        <div className={styles.orbitOuter} />
-        <div className={styles.orbitMiddle} />
-        <div className={styles.orbitTilt} />
         <div className={styles.coreHalo} />
         <div className={styles.scanlines} />
 
-        <svg className={styles.network} viewBox="0 0 100 100" role="img">
-          <title>Granular animated neural network preview</title>
-          {neuralLines.map(({ id, from, to }) => (
-            <line
-              key={id}
-              className={styles.neuralLine}
-              x1={from.x}
-              x2={to.x}
-              y1={from.y}
-              y2={to.y}
-            />
-          ))}
-          {neuralNodes.map((node) => (
-            <circle
-              key={node.id}
-              className={node.isHot ? styles.neuralNodeHot : styles.neuralNode}
-              cx={node.x}
-              cy={node.y}
-              r={node.isHot ? 1.35 + node.depth * 1.1 : 0.72 + node.depth * 0.8}
-              style={getNodeStyle(node)}
-            />
-          ))}
-        </svg>
+        <NeuralCoreCanvas
+          fallback={<NeuralCoreFallback neuralLines={neuralLines} neuralNodes={neuralNodes} />}
+        />
 
         <div className={styles.energyColumn} />
         <div className={styles.baseRing} />
         <div className={styles.baseRingTwo} />
-        <div className={styles.particleOne} />
-        <div className={styles.particleTwo} />
-        <div className={styles.particleThree} />
       </div>
 
       <div className={styles.futureNote}>
@@ -76,6 +51,44 @@ export const AiCorePreviewView = ({
         <strong>Model {engineVersion}</strong>
       </div>
     </section>
+  );
+};
+
+interface NeuralCoreFallbackProps {
+  neuralLines: AiCorePreviewViewProps["neuralLines"];
+  neuralNodes: AiCorePreviewViewProps["neuralNodes"];
+}
+
+const NeuralCoreFallback = ({
+  neuralLines,
+  neuralNodes,
+}: NeuralCoreFallbackProps): ReactElement => {
+  return (
+    <div className={styles.fallbackCore} aria-label="AI Core fallback preview">
+      <svg className={styles.network} viewBox="0 0 100 100" role="img">
+        <title>Granular animated neural network preview</title>
+        {neuralLines.map(({ id, from, to }) => (
+          <line
+            key={id}
+            className={styles.neuralLine}
+            x1={from.x}
+            x2={to.x}
+            y1={from.y}
+            y2={to.y}
+          />
+        ))}
+        {neuralNodes.map((node) => (
+          <circle
+            key={node.id}
+            className={node.isHot ? styles.neuralNodeHot : styles.neuralNode}
+            cx={node.x}
+            cy={node.y}
+            r={node.isHot ? 1.35 + node.depth * 1.1 : 0.72 + node.depth * 0.8}
+            style={getNodeStyle(node)}
+          />
+        ))}
+      </svg>
+    </div>
   );
 };
 
