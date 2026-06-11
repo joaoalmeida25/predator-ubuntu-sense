@@ -3,9 +3,9 @@ export type AppPageId =
   | "performance"
   | "system"
   | "lighting"
-  | "network"
-  | "devices"
   | "power"
+  | "thermal"
+  | "devices"
   | "settings";
 
 export interface AppNavigationItem {

@@ -1,0 +1,98 @@
+.panelCard {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 17px;
+  background:
+    linear-gradient(145deg, rgba(10, 14, 31, 0.82), rgba(3, 6, 18, 0.76)),
+    var(--color-panel);
+  box-shadow: var(--shadow-panel);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.panelHeader h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.panelHeader h2::before {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 9px;
+  border-radius: 50%;
+  background: var(--color-blue);
+  box-shadow: 0 0 14px var(--color-blue);
+  content: "";
+  vertical-align: middle;
+}
+
+.panelHeader span {
+  color: var(--color-purple-strong);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.thermalImage {
+  display: block;
+  width: min(100%, 560px);
+  height: clamp(134px, 20vh, 184px);
+  margin: -4px auto 2px;
+  object-fit: contain;
+  filter: drop-shadow(0 26px 34px rgba(0, 0, 0, 0.46));
+}
+
+.thermalList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 3px;
+}
+
+.thermalRow {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 13px;
+  align-items: center;
+}
+
+.thermalRow div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.thermalRow strong {
+  font-size: 13px;
+}
+
+.thermalRow span {
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+.thermalTrack {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.thermalTrack span {
+  display: block;
+  width: var(--progress);
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-blue), var(--color-purple-strong));
+}

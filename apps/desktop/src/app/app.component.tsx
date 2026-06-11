@@ -1,8 +1,8 @@
 import { useState, type ReactElement } from "react";
 
-import { Dashboard } from "../features/dashboard/components/dashboard.component";
-import { Performance } from "../features/performance/components/performance.component";
-import { AppLayout } from "./app-layout.component";
+import { Dashboard } from "../features/dashboard/components/dashboard/dashboard.component";
+import { Performance } from "../features/performance/components/performance/performance.component";
+import { AppLayout } from "./components/app-layout/app-layout.component";
 import type { AppPageId } from "./app.types";
 
 export const App = (): ReactElement => {

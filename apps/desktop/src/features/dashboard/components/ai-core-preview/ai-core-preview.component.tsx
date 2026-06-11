@@ -1,23 +1,14 @@
-import type { CSSProperties, ReactElement } from "react";
+import type { ReactElement } from "react";
 
 import styles from "./ai-core-preview.module.css";
-import type { AiCorePreviewProps } from "./ai-core-preview.types";
+import { AiCorePreviewView } from "./ai-core-preview-view.component";
+import type {
+  AiCorePreviewLine,
+  AiCorePreviewNode,
+  AiCorePreviewProps,
+} from "./ai-core-preview-view.types";
 
-interface NeuralNode {
-  id: number;
-  x: number;
-  y: number;
-  depth: number;
-  isHot: boolean;
-}
-
-interface NeuralLine {
-  id: string;
-  from: NeuralNode;
-  to: NeuralNode;
-}
-
-const createNeuralNodes = (): NeuralNode[] => {
+const createNeuralNodes = (): AiCorePreviewNode[] => {
   return Array.from({ length: 84 }, (_, index) => {
     const angle = index * 2.399963229728653;
     const radius = Math.sqrt(index / 84) * 42;
@@ -35,13 +26,13 @@ const createNeuralNodes = (): NeuralNode[] => {
   });
 };
 
-const neuralNodes = createNeuralNodes();
-
-const getDistance = (from: NeuralNode, to: NeuralNode): number => {
+const getDistance = (from: AiCorePreviewNode, to: AiCorePreviewNode): number => {
   return Math.hypot(from.x - to.x, from.y - to.y);
 };
 
-const neuralLines: NeuralLine[] = neuralNodes.flatMap((node, index) => {
+const neuralNodes = createNeuralNodes();
+
+const neuralLines: AiCorePreviewLine[] = neuralNodes.flatMap((node, index) => {
   return neuralNodes
     .filter((candidate) => candidate.id !== node.id)
     .map((candidate) => ({ candidate, distance: getDistance(node, candidate) }))
@@ -55,99 +46,64 @@ const neuralLines: NeuralLine[] = neuralNodes.flatMap((node, index) => {
     }));
 });
 
-const getNodeStyle = (node: NeuralNode): CSSProperties => {
-  return {
-    "--node-delay": `${-(node.id % 12) * 0.18}s`,
-    "--node-depth": node.depth,
-  } as CSSProperties;
-};
-
 export const AiCorePreview = ({
   nodeCountLabel,
   modelStatus,
   learningRate,
   dataFlow,
+  engineVersion,
+  engineStatus,
+  predictionAccuracy,
 }: AiCorePreviewProps): ReactElement => {
   return (
-    <section className={styles.corePanel} aria-label="AI Core preview">
-      <div className={styles.panelHeader}>
-        <p className={styles.eyebrow}>Predator AI Core</p>
-        <h2 className={styles.title}>Adaptive Neural Runtime</h2>
-      </div>
-
-      <div className={styles.stage}>
-        <TelemetryCallout className={styles.calloutLeftTop} label="Neural Nodes" value={nodeCountLabel} detail="Active" />
-        <TelemetryCallout className={styles.calloutLeftMiddle} label="Learning Rate" value={learningRate} detail="Optimal" />
-        <TelemetryCallout className={styles.calloutLeftBottom} label="Data Flow" value={dataFlow} detail="Synaptic Throughput" />
-        <TelemetryCallout className={styles.calloutRightTop} label="Model Status" value={modelStatus} detail="Continuous Learning" />
-        <TelemetryCallout className={styles.calloutRightMiddle} label="AI Engine" value="v2.7.4" detail="Online" />
-        <TelemetryCallout className={styles.calloutRightBottom} label="Prediction Accuracy" value="99.3%" detail="High Confidence" />
-
-        <div className={styles.orbitOuter} />
-        <div className={styles.orbitMiddle} />
-        <div className={styles.orbitTilt} />
-        <div className={styles.coreHalo} />
-        <div className={styles.scanlines} />
-
-        <svg className={styles.network} viewBox="0 0 100 100" role="img">
-          <title>Granular animated neural network preview</title>
-          {neuralLines.map(({ id, from, to }) => (
-            <line
-              key={id}
-              className={styles.neuralLine}
-              x1={from.x}
-              x2={to.x}
-              y1={from.y}
-              y2={to.y}
-            />
-          ))}
-          {neuralNodes.map((node) => (
-            <circle
-              key={node.id}
-              className={node.isHot ? styles.neuralNodeHot : styles.neuralNode}
-              cx={node.x}
-              cy={node.y}
-              r={node.isHot ? 1.35 + node.depth * 1.1 : 0.72 + node.depth * 0.8}
-              style={getNodeStyle(node)}
-            />
-          ))}
-        </svg>
-
-        <div className={styles.energyColumn} />
-        <div className={styles.baseRing} />
-        <div className={styles.baseRingTwo} />
-        <div className={styles.particleOne} />
-        <div className={styles.particleTwo} />
-        <div className={styles.particleThree} />
-      </div>
-
-      <div className={styles.futureNote}>
-        <span>AI Optimization</span>
-        <p>Granular CSS/SVG neural core preview. Future replacement candidate: React Three Fiber / Three.js.</p>
-        <strong>Model v2.7.4</strong>
-      </div>
-    </section>
-  );
-};
-
-interface TelemetryCalloutProps {
-  className: string;
-  label: string;
-  value: string;
-  detail: string;
-}
-
-const TelemetryCallout = ({
-  className,
-  label,
-  value,
-  detail,
-}: TelemetryCalloutProps): ReactElement => {
-  return (
-    <div className={`${styles.callout} ${className}`}>
-      <span>{label}</span>
-      <strong>{value}</strong>
-      <small>{detail}</small>
-    </div>
+    <AiCorePreviewView
+      nodeCountLabel={nodeCountLabel}
+      modelStatus={modelStatus}
+      learningRate={learningRate}
+      dataFlow={dataFlow}
+      neuralNodes={neuralNodes}
+      neuralLines={neuralLines}
+      engineVersion={engineVersion}
+      engineStatus={engineStatus}
+      predictionAccuracy={predictionAccuracy}
+      callouts={[
+        {
+          className: styles.calloutLeftTop,
+          label: "Neural Nodes",
+          value: nodeCountLabel,
+          detail: "Active",
+        },
+        {
+          className: styles.calloutLeftMiddle,
+          label: "Learning Rate",
+          value: learningRate,
+          detail: "Optimal",
+        },
+        {
+          className: styles.calloutLeftBottom,
+          label: "Data Flow",
+          value: dataFlow,
+          detail: "Synaptic Throughput",
+        },
+        {
+          className: styles.calloutRightTop,
+          label: "Model Status",
+          value: modelStatus,
+          detail: "Continuous Learning",
+        },
+        {
+          className: styles.calloutRightMiddle,
+          label: "AI Engine",
+          value: engineVersion,
+          detail: engineStatus,
+        },
+        {
+          className: styles.calloutRightBottom,
+          label: "Prediction Accuracy",
+          value: predictionAccuracy,
+          detail: "High Confidence",
+        },
+      ]}
+    />
   );
 };

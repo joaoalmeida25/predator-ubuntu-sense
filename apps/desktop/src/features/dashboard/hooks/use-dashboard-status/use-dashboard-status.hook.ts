@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { getDriverStatus } from "../../../../shared/services/driver-runtime/get-driver-status.service";
-import { getSystemStatus } from "../../../../shared/services/system-status/get-system-status.service";
+import { getDriverStatus } from "../../../../shared/services/driver-runtime/get-driver-status/get-driver-status.service";
+import { getSystemStatus } from "../../../../shared/services/system-status/get-system-status/get-system-status.service";
 import type { AsyncState } from "../../../../shared/types/async-state.type";
 import type {
   DashboardStatusData,

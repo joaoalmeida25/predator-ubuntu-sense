@@ -1,0 +1,292 @@
+.sidebar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  height: 100vh;
+  min-height: 0;
+  flex-direction: column;
+  gap: 22px;
+  padding: 22px 18px 18px;
+  background:
+    radial-gradient(circle at 52% 14%, rgba(118, 77, 255, 0.16), transparent 42%),
+    rgba(1, 3, 12, 0.84);
+  backdrop-filter: blur(30px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 62px;
+}
+
+.brandMark {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 20px rgba(167, 100, 255, 0.52));
+}
+
+.brandTitle,
+.brandSubtitle,
+.deviceName,
+.deviceModel {
+  margin: 0;
+}
+
+.brandTitle {
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 950;
+  letter-spacing: 0.11em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.brandSubtitle {
+  margin-top: 5px;
+  color: var(--color-purple-strong);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.navigation {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.navItem,
+.navItemActive {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  padding: 10px 12px;
+  color: var(--color-muted);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast),
+    color var(--transition-fast),
+    opacity var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.navItem:hover:not(:disabled) {
+  border-color: rgba(121, 97, 255, 0.26);
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.038);
+  transform: translateX(2px);
+}
+
+.navItemActive {
+  border-color: rgba(126, 99, 255, 0.62);
+  color: #ffffff;
+  background:
+    linear-gradient(90deg, rgba(126, 77, 255, 0.54), rgba(47, 141, 255, 0.12)),
+    rgba(255, 255, 255, 0.04);
+  box-shadow: inset 3px 0 0 var(--color-purple-strong), 0 0 34px rgba(89, 72, 255, 0.2);
+}
+
+.navItem:disabled {
+  opacity: 0.44;
+}
+
+.navItem:disabled .navStatus {
+  opacity: 0.82;
+}
+
+.navIcon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  color: currentColor;
+  background: rgba(255, 255, 255, 0.024);
+}
+
+.navItemActive .navIcon {
+  border-color: rgba(167, 100, 255, 0.45);
+  color: #ffffff;
+  background: rgba(126, 77, 255, 0.18);
+  box-shadow: 0 0 18px rgba(126, 77, 255, 0.24);
+}
+
+.navIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.navLabel {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navStatus {
+  border: 1px solid rgba(167, 100, 255, 0.16);
+  border-radius: 999px;
+  padding: 3px 6px;
+  color: var(--color-purple-strong);
+  background: rgba(126, 77, 255, 0.06);
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.deviceCard {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(114, 131, 255, 0.18);
+  border-radius: 20px;
+  padding: 15px;
+  background:
+    radial-gradient(circle at 50% 16%, rgba(126, 77, 255, 0.24), transparent 48%),
+    rgba(7, 10, 24, 0.72);
+  box-shadow: var(--shadow-panel);
+}
+
+.deviceGlow {
+  position: absolute;
+  inset: auto -26px 8px;
+  height: 106px;
+  background: radial-gradient(circle, rgba(126, 77, 255, 0.33), transparent 68%);
+  filter: blur(14px);
+}
+
+.deviceImage {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 184px;
+  margin: -2px auto 8px;
+  filter: drop-shadow(0 24px 32px rgba(0, 0, 0, 0.38));
+}
+
+.deviceName {
+  position: relative;
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.deviceModel,
+.osRow {
+  position: relative;
+  margin-top: 4px;
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.osRow,
+.onlineRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 13px;
+}
+
+.ubuntuDot {
+  width: 12px;
+  height: 12px;
+  border: 3px solid #ff6a2b;
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(255, 106, 43, 0.46);
+}
+
+.onlineRow {
+  position: relative;
+  color: #32f597;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.onlineDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 16px currentColor;
+}
+
+@media (max-width: 1180px) {
+  .sidebar {
+    align-items: center;
+    padding: 20px 12px;
+  }
+
+  .brandTitle,
+  .brandSubtitle,
+  .navLabel,
+  .navStatus,
+  .deviceName,
+  .deviceModel,
+  .osRow,
+  .onlineRow {
+    display: none;
+  }
+
+  .brand {
+    justify-content: center;
+  }
+
+  .brandMark {
+    width: 46px;
+    height: 46px;
+  }
+
+  .navItem,
+  .navItemActive {
+    display: flex;
+    justify-content: center;
+    padding: 10px;
+  }
+
+  .deviceCard {
+    padding: 10px;
+  }
+
+  .deviceImage {
+    width: 54px;
+    margin: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .sidebar {
+    position: relative;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    overflow-x: auto;
+  }
+
+  .navigation {
+    flex: 1;
+    flex-direction: row;
+  }
+
+  .deviceCard {
+    display: none;
+  }
+}

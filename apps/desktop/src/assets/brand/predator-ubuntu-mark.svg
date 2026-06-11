@@ -1,0 +1,27 @@
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="markGradient" x1="24" y1="16" x2="136" y2="145" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="0.36" stop-color="#B86BFF"/>
+      <stop offset="0.72" stop-color="#536BFF"/>
+      <stop offset="1" stop-color="#26D9FF"/>
+    </linearGradient>
+    <radialGradient id="coreGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(80 85) rotate(90) scale(72)">
+      <stop stop-color="#B86BFF" stop-opacity="0.72"/>
+      <stop offset="0.58" stop-color="#536BFF" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#020510" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softGlow" x="-18" y="-18" width="196" height="196" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="5.5" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.5 0 0 0 0 0.28 0 0 0 0 1 0 0 0 0.7 0"/>
+      <feBlend in="SourceGraphic" mode="screen"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="84" r="66" fill="url(#coreGlow)" opacity="0.75"/>
+  <path d="M80 12 122 32 112 62 145 47 127 91 94 142 85 94 80 119 75 94 66 142 33 91 15 47 48 62 38 32 80 12Z" fill="url(#markGradient)" filter="url(#softGlow)"/>
+  <path d="M80 32 101 43 93 73 80 59 67 73 59 43 80 32Z" fill="#040713" opacity="0.95"/>
+  <path d="M48 72 69 84 60 111 45 88 29 62 48 72Z" fill="#040713" opacity="0.95"/>
+  <path d="M112 72 91 84 100 111 115 88 131 62 112 72Z" fill="#040713" opacity="0.95"/>
+  <path d="M80 66 90 83 80 101 70 83 80 66Z" fill="#040713" opacity="0.95"/>
+  <path d="M80 20 116 38M80 20 44 38M25 57 42 88 62 124M135 57 118 88 98 124" stroke="#FFFFFF" stroke-opacity="0.34" stroke-width="2" stroke-linecap="round"/>
+</svg>

@@ -1,8 +1,10 @@
 import type { ReactElement } from "react";
 
-import laptopRenderUrl from "../../../../shared/assets/predator-laptop-render.svg";
-import styles from "./device-overview-card.module.css";
-import type { DeviceOverviewCardProps } from "./device-overview-card.types";
+import laptopRenderUrl from "../../../../assets/device/predator-laptop.webp";
+import { DeviceOverviewCardView } from "./device-overview-card-view.component";
+import type { DeviceOverviewCardViewProps } from "./device-overview-card-view.types";
+
+type DeviceOverviewCardProps = Omit<DeviceOverviewCardViewProps, "deviceImageUrl">;
 
 export const DeviceOverviewCard = ({
   name,
@@ -10,32 +12,11 @@ export const DeviceOverviewCard = ({
   specs,
 }: DeviceOverviewCardProps): ReactElement => {
   return (
-    <article className={styles.card}>
-      <div className={styles.cardHeader}>
-        <span className={styles.dot} />
-        <h2>Device Overview</h2>
-      </div>
-
-      <img className={styles.deviceImage} src={laptopRenderUrl} alt="" />
-
-      <div className={styles.identity}>
-        <strong>{name}</strong>
-        <span>{model}</span>
-      </div>
-
-      <dl className={styles.specList}>
-        {specs.map((spec) => (
-          <div key={spec.label} className={styles.specRow}>
-            <dt>{spec.label}</dt>
-            <dd>{spec.value}</dd>
-          </div>
-        ))}
-      </dl>
-
-      <button type="button" className={styles.fullSpecsButton} disabled>
-        View Full Specs
-        <span aria-hidden="true">›</span>
-      </button>
-    </article>
+    <DeviceOverviewCardView
+      deviceImageUrl={laptopRenderUrl}
+      name={name}
+      model={model}
+      specs={specs}
+    />
   );
 };

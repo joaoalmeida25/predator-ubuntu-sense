@@ -1,0 +1,120 @@
+.panelCard {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 17px;
+  background:
+    linear-gradient(145deg, rgba(10, 14, 31, 0.82), rgba(3, 6, 18, 0.76)),
+    var(--color-panel);
+  box-shadow: var(--shadow-panel);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.panelHeader h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.panelHeader h2::before {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 9px;
+  border-radius: 50%;
+  background: var(--color-blue);
+  box-shadow: 0 0 14px var(--color-blue);
+  content: "";
+  vertical-align: middle;
+}
+
+.panelHeader span {
+  color: var(--color-purple-strong);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.modeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.modeButton,
+.modeButtonActive {
+  display: grid;
+  min-height: 74px;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
+  gap: 5px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 13px;
+  padding: 12px;
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.035);
+  text-align: left;
+}
+
+.modeButtonActive {
+  border-color: var(--color-border-strong);
+  background: rgba(126, 77, 255, 0.16);
+}
+
+.modeButton svg,
+.modeButtonActive svg {
+  grid-row: span 2;
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+  opacity: 0.9;
+}
+
+.modeButton span,
+.modeButtonActive span {
+  color: var(--color-muted);
+  font-size: 12px;
+}
+
+.fanSpeedRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 28px;
+  color: var(--color-muted);
+}
+
+.fanSpeedRow strong {
+  color: var(--color-text);
+}
+
+.fanTrack {
+  height: 7px;
+  margin-top: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.fanTrack span {
+  display: block;
+  width: var(--fan-progress);
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-blue), var(--color-purple-strong));
+}
+
+@media (max-width: 980px) {
+  .modeGrid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -3,10 +3,14 @@
   min-height: 0;
   height: 100%;
   flex-direction: column;
+  overflow: hidden;
   border: 1px solid var(--color-border);
-  border-radius: 20px;
-  padding: 16px;
-  background: var(--color-panel);
+  border-radius: var(--radius-card);
+  padding: 15px;
+  background:
+    radial-gradient(circle at 50% 16%, rgba(126, 77, 255, 0.14), transparent 46%),
+    linear-gradient(145deg, rgba(10, 14, 31, 0.82), rgba(3, 6, 18, 0.74)),
+    var(--color-panel);
   box-shadow: var(--shadow-panel);
 }
 
@@ -14,7 +18,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .cardHeader h2 {
@@ -35,9 +39,9 @@
 
 .deviceImage {
   display: block;
-  width: min(92%, 235px);
-  margin: 4px auto 8px;
-  filter: drop-shadow(0 24px 32px rgba(0, 0, 0, 0.36));
+  width: min(100%, 255px);
+  margin: 0 auto 4px;
+  filter: drop-shadow(0 26px 32px rgba(0, 0, 0, 0.44));
 }
 
 .identity {
@@ -45,14 +49,14 @@
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   text-align: center;
 }
 
 .identity strong {
   color: var(--color-text);
-  font-size: 18px;
-  font-weight: 900;
+  font-size: 17px;
+  font-weight: 950;
 }
 
 .identity span {
@@ -67,7 +71,7 @@
   flex: 1;
   flex-direction: column;
   justify-content: center;
-  gap: 9px;
+  gap: 8px;
   margin: 0;
 }
 
@@ -104,25 +108,4 @@
   text-align: right;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.fullSpecsButton {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  margin-top: 14px;
-  border: 1px solid var(--color-border);
-  border-radius: 13px;
-  padding: 11px 13px;
-  color: var(--color-purple-strong);
-  background: rgba(255, 255, 255, 0.035);
-  cursor: not-allowed;
-  font-weight: 900;
-}
-
-.fullSpecsButton span {
-  font-size: 22px;
-  line-height: 1;
 }

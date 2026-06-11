@@ -6,27 +6,34 @@
   background: var(--color-bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --color-bg: #020510;
-  --color-bg-soft: #070b19;
-  --color-panel: rgba(10, 13, 28, 0.78);
-  --color-panel-soft: rgba(255, 255, 255, 0.04);
-  --color-panel-strong: rgba(12, 16, 34, 0.94);
-  --color-border: rgba(119, 137, 255, 0.16);
-  --color-border-strong: rgba(126, 99, 255, 0.46);
-  --color-text: #f6f2ff;
-  --color-muted: #aeb5d3;
-  --color-dim: #69708d;
+
+  --color-bg: #01030c;
+  --color-bg-soft: #060915;
+  --color-panel: rgba(7, 10, 24, 0.76);
+  --color-panel-soft: rgba(255, 255, 255, 0.035);
+  --color-panel-strong: rgba(10, 14, 31, 0.94);
+  --color-border: rgba(114, 131, 255, 0.15);
+  --color-border-strong: rgba(121, 97, 255, 0.48);
+  --color-text: #f7f3ff;
+  --color-muted: #aab1cf;
+  --color-dim: #69718f;
   --color-purple: #7d4dff;
   --color-purple-strong: #a764ff;
-  --color-violet-dark: #6d42d8;
+  --color-violet-dark: #6b35d6;
   --color-blue: #2f8dff;
   --color-cyan: #26d9ff;
   --color-green: #20e98c;
   --color-orange: #ff9438;
   --color-magenta: #ff31b9;
   --color-red: #ff3f75;
-  --shadow-panel: 0 24px 80px rgba(0, 0, 0, 0.34);
-  --shadow-glow: 0 0 42px rgba(89, 72, 255, 0.18);
+
+  --radius-card: 20px;
+  --radius-control: 14px;
+  --spacing-page-x: 24px;
+  --spacing-page-y: 20px;
+  --transition-fast: 160ms ease;
+  --shadow-panel: 0 24px 72px rgba(0, 0, 0, 0.34);
+  --shadow-glow: 0 0 42px rgba(76, 84, 255, 0.16);
 }
 
 * {
@@ -55,4 +62,8 @@ button:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--color-cyan);
   outline-offset: 3px;
+}
+
+button:disabled {
+  cursor: not-allowed;
 }
