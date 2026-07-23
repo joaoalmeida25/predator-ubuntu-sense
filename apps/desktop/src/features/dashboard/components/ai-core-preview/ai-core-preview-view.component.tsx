@@ -54,7 +54,10 @@ export const AiCorePreviewView = ({
       className={styles.corePanel}
       aria-label="AI Core preview"
       data-neural-core-label-boundary
+      data-neural-core-inspection-root
       data-interaction-mode={inspectionState.mode}
+      data-selection-active={inspectionFocus.selectedClusterId ? "true" : "false"}
+      data-context-panel-open={contextPanel ? "true" : "false"}
       onKeyDown={onKeyDown}
     >
       <div className={styles.panelHeader}>
@@ -67,8 +70,8 @@ export const AiCorePreviewView = ({
           <TelemetryCallout key={callout.label} {...callout} />
         ))}
 
-        <div className={styles.coreHalo} />
-        <div className={styles.scanlines} />
+        <div className={`${styles.coreHalo} ${styles.inspectionGlobalGlow}`} />
+        <div className={`${styles.scanlines} ${styles.inspectionPeripheralUi}`} />
 
         <NeuralCoreCanvas
           fallback={<NeuralCoreFallback neuralLines={neuralLines} neuralNodes={neuralNodes} />}
@@ -104,14 +107,14 @@ export const AiCorePreviewView = ({
         {inspectionControls}
         {contextPanel}
 
-        <div className={styles.energyColumn} />
-        <div className={styles.baseRing} />
-        <div className={styles.baseRingTwo} />
+        <div className={`${styles.energyColumn} ${styles.inspectionGlobalGlow}`} />
+        <div className={`${styles.baseRing} ${styles.inspectionBaseDecoration}`} />
+        <div className={`${styles.baseRingTwo} ${styles.inspectionBaseDecoration}`} />
       </div>
 
       {demoControls}
 
-      <div className={styles.futureNote}>
+      <div className={`${styles.futureNote} ${styles.inspectionPeripheralUi}`}>
         <span>AI Optimization</span>
         <p>Learning your usage patterns and optimizing runtime telemetry...</p>
         <strong>Model {engineVersion}</strong>
@@ -166,8 +169,9 @@ const TelemetryCallout = ({
 }: AiCorePreviewCallout): ReactElement => {
   return (
     <div
-      className={`${styles.callout} ${className}`}
+      className={`${styles.callout} ${styles.inspectionPeripheralUi} ${className}`}
       data-neural-core-label-exclusion
+      data-neural-core-global-callout
     >
       <span>{label}</span>
       <strong>{value}</strong>

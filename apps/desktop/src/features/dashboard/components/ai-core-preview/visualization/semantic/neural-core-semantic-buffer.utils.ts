@@ -33,7 +33,13 @@ import type {
   NeuralCoreSceneDirectionState,
 } from "../direction/neural-core-scene-direction.types";
 import type { NeuralCoreNarrativeVisualState } from "../narrative/neural-core-narrative-visual.types";
-import type { NeuralCoreVisualDensityRuntime } from "../inspection/neural-core-visual-density.types";
+import type { NeuralCoreInspectionVisibilityState } from "../inspection/neural-core-inspection-visibility.types";
+import {
+  resolveNeuralCoreInspectionVisibilityRole,
+} from "../inspection/neural-core-inspection-visibility.utils";
+import type { NeuralCoreCameraRenderingProfile } from "../inspection/neural-core-camera-rendering.types";
+import type { NeuralCoreElementVisualComposition } from "../inspection/neural-core-element-visual-composition.types";
+import { writeNeuralCoreElementVisualComposition } from "../inspection/neural-core-element-visual-composition.utils";
 
 interface SemanticRibbonSegment {
   baseOpacity: number;
@@ -46,6 +52,13 @@ interface SemanticRibbonSegment {
   start: NeuralCoreVector3;
   synapseEffectIndex: number;
 }
+
+const SEMANTIC_VISUAL_COMPOSITION: NeuralCoreElementVisualComposition = {
+  opacity: 1,
+  brightness: 1,
+  scale: 1,
+  thickness: 1,
+};
 
 const clamp = (value: number, minimum = 0, maximum = 1): number => {
   return Math.min(maximum, Math.max(minimum, Number.isFinite(value) ? value : minimum));
@@ -913,7 +926,8 @@ const writeNodeTargets = (
   directionState: NeuralCoreSceneDirectionState,
   directionConfig: NeuralCoreSceneDirectionConfig,
   narrativeVisualState: NeuralCoreNarrativeVisualState,
-  visualDensity: NeuralCoreVisualDensityRuntime,
+  cameraProfile: NeuralCoreCameraRenderingProfile,
+  inspectionVisibility: NeuralCoreInspectionVisibilityState,
 ): number => {
   const field = buffers.nodeField;
   const neutralColor = parseHexColor(config.color.neutral);
@@ -1047,28 +1061,34 @@ const writeNodeTargets = (
     }
     targetScale *= nodeEmphasis.scale;
     targetOpacity *= nodeEmphasis.opacity;
-    if (visualDensity.enabled) {
-      if (focusLevel <= 0) {
-        targetOpacity *= visualDensity.unrelatedNodeOpacity;
-      } else if (focusLevel >= 2) {
-        targetFill = Math.max(
-          targetFill,
-          (visualDensity.internalConnectionEmphasis - 1) * 0.52,
-        );
-      }
-    }
-    buffers.nodeFocusLevels[nodeIndex] = focusLevel;
-    field.targets.scales[nodeIndex] = Math.min(
-      config.cluster.maximumNodeScale
-        * (nodeKind === "hub" || nodeKind === "core" ? 1.32 : 1.18),
-      targetScale,
-    );
-    field.targets.opacities[nodeIndex] = targetOpacity;
-    field.targets.brightnesses[nodeIndex] = nodeEmphasis.brightness
+    const semanticBrightness = nodeEmphasis.brightness
       * (1 + narrativeInternalActivity * 0.24 + narrativeArrival * 0.32)
       * (narrativeVisualState.narrativeState.isActive && !isNarrativeCluster
         ? 1 - narrativeVisualState.narrativeState.contextDim * 0.34
         : 1 + narrativeVisualState.narrativeState.clusterEmphasis * 0.2);
+    const composition = writeNeuralCoreElementVisualComposition(
+      SEMANTIC_VISUAL_COMPOSITION,
+      resolveNeuralCoreInspectionVisibilityRole(focusLevel),
+      "node",
+      targetOpacity,
+      semanticBrightness,
+      targetScale,
+      1,
+      1,
+      1,
+      1,
+      1,
+      cameraProfile,
+      inspectionVisibility,
+    );
+    buffers.nodeFocusLevels[nodeIndex] = focusLevel;
+    field.targets.scales[nodeIndex] = Math.min(
+      config.cluster.maximumNodeScale
+        * (nodeKind === "hub" || nodeKind === "core" ? 1.32 : 1.18),
+      composition.scale,
+    );
+    field.targets.opacities[nodeIndex] = composition.opacity;
+    field.targets.brightnesses[nodeIndex] = composition.brightness;
     field.targets.jitters[nodeIndex] = jitter;
     field.targets.fragmentations[nodeIndex] = fragmentation;
     field.targets.decays[nodeIndex] = decay;
@@ -1158,7 +1178,8 @@ const updateConnectionTargets = (
   directionState: NeuralCoreSceneDirectionState,
   directionConfig: NeuralCoreSceneDirectionConfig,
   narrativeVisualState: NeuralCoreNarrativeVisualState,
-  visualDensity: NeuralCoreVisualDensityRuntime,
+  cameraProfile: NeuralCoreCameraRenderingProfile,
+  inspectionVisibility: NeuralCoreInspectionVisibilityState,
 ): void => {
   for (const field of buffers.connectionFields) {
     field.targetColors.set(field.baseColors);
@@ -1257,17 +1278,31 @@ const updateConnectionTargets = (
             );
           }
         }
-        if (visualDensity.enabled) {
-          targetOpacity *= focusLevel >= 2
-            ? visualDensity.internalConnectionEmphasis
-            : focusLevel === 1
-              ? visualDensity.relatedConnectionEmphasis
-              : visualDensity.baseConnectionOpacity;
-        }
+        const composition = writeNeuralCoreElementVisualComposition(
+          SEMANTIC_VISUAL_COMPOSITION,
+          resolveNeuralCoreInspectionVisibilityRole(focusLevel),
+          "internal-connection",
+          targetOpacity,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          cameraProfile,
+          inspectionVisibility,
+        );
+        targetOpacity = composition.opacity;
+        const maximumConnectionOpacity = inspectionVisibility.enabled
+          ? config.synapse.maximumOpacity * (
+            focusLevel >= 2 ? 0.92 : focusLevel === 1 ? 0.78 : 0.68
+          )
+          : config.synapse.maximumOpacity * 0.68;
         field.targetOpacities[vertexIndex] = clamp(
           targetOpacity,
           0,
-          config.synapse.maximumOpacity * 0.68,
+          maximumConnectionOpacity,
         );
         const tintAmount = clamp(colorInfluence * 0.82 + reinforcement * 0.16);
         const semanticRed = ((semanticColor >> 16) & 255) / 255;
@@ -1372,7 +1407,8 @@ const updateRibbonTargets = (
   directionConfig: NeuralCoreSceneDirectionConfig,
   narrativeVisualState: NeuralCoreNarrativeVisualState,
   routeBackgroundOpacity: number,
-  visualDensity: NeuralCoreVisualDensityRuntime,
+  cameraProfile: NeuralCoreCameraRenderingProfile,
+  inspectionVisibility: NeuralCoreInspectionVisibilityState,
 ): number => {
   let activeRibbonVertexCount = 0;
   const neutralColor = parseHexColor(config.color.neutral);
@@ -1490,21 +1526,35 @@ const updateRibbonTargets = (
         pulseIntensity *= peripheralOpacity;
       }
     }
-    if (visualDensity.enabled) {
-      const densityMultiplier = directionLevel >= 2
-        ? visualDensity.internalConnectionEmphasis
-        : directionLevel === 1
-          ? visualDensity.relatedConnectionEmphasis
-          : visualDensity.baseConnectionOpacity;
-      opacity *= densityMultiplier;
-      if (directionLevel <= 0) {
-        pulseIntensity *= densityMultiplier;
-      }
-    }
-    const thickness = config.synapse.minimumThickness
+    let thickness = config.synapse.minimumThickness
       + clamp(thicknessEffect) * (
         config.synapse.maximumThickness - config.synapse.minimumThickness
       );
+    const visibilityRole = isNarrativeRoute
+      ? "selected"
+      : directionLevel >= 1 ? "related" : "context";
+    const composition = writeNeuralCoreElementVisualComposition(
+      SEMANTIC_VISUAL_COMPOSITION,
+      visibilityRole,
+      "connection",
+      opacity,
+      1,
+      1,
+      thickness,
+      1,
+      1,
+      1,
+      1,
+      cameraProfile,
+      inspectionVisibility,
+    );
+    opacity = clamp(composition.opacity, 0, config.synapse.maximumOpacity);
+    thickness = clamp(
+      composition.thickness,
+      config.synapse.minimumThickness,
+      config.synapse.maximumThickness,
+    );
+    pulseIntensity *= composition.brightness;
     const fragmentation = synapse?.fragmentation ?? 0;
     const instability = synapse?.instability ?? 0;
     const interruption = Math.max(
@@ -1557,7 +1607,8 @@ export const updateNeuralCoreSemanticBuffers = (
   narrativeVisualState: NeuralCoreNarrativeVisualState,
   routeBackgroundOpacity: number,
   deltaSeconds: number,
-  visualDensity: NeuralCoreVisualDensityRuntime,
+  cameraProfile: NeuralCoreCameraRenderingProfile,
+  inspectionVisibility: NeuralCoreInspectionVisibilityState,
 ): NeuralCoreSemanticBufferUpdateResult => {
   compileDirectionFocusLevels(buffers, directionState);
   const activeNodeCount = writeNodeTargets(
@@ -1568,7 +1619,8 @@ export const updateNeuralCoreSemanticBuffers = (
     directionState,
     directionConfig,
     narrativeVisualState,
-    visualDensity,
+    cameraProfile,
+    inspectionVisibility,
   );
   const nodeAttributesChanged = dampNodeField(buffers.nodeField, config, deltaSeconds);
   if (nodeAttributesChanged) {
@@ -1581,7 +1633,8 @@ export const updateNeuralCoreSemanticBuffers = (
     directionState,
     directionConfig,
     narrativeVisualState,
-    visualDensity,
+    cameraProfile,
+    inspectionVisibility,
   );
   const connectionAttributesChanged = dampConnectionFields(buffers, config, deltaSeconds);
   const activeRibbonVertexCount = updateRibbonTargets(
@@ -1592,7 +1645,8 @@ export const updateNeuralCoreSemanticBuffers = (
     directionConfig,
     narrativeVisualState,
     routeBackgroundOpacity,
-    visualDensity,
+    cameraProfile,
+    inspectionVisibility,
   );
   const ribbonAttributesChanged = dampRibbonField(buffers.ribbonField, config, deltaSeconds);
 

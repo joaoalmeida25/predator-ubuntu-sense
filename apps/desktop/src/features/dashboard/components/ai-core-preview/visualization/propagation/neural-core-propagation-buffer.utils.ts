@@ -17,13 +17,26 @@ import type {
   NeuralCoreSceneDirectionConfig,
   NeuralCoreSceneDirectionState,
 } from "../direction/neural-core-scene-direction.types";
-import type { NeuralCoreVisualDensityRuntime } from "../inspection/neural-core-visual-density.types";
+import type { NeuralCoreInspectionVisibilityState } from "../inspection/neural-core-inspection-visibility.types";
+import {
+  resolveNeuralCoreInspectionVisibilityRole,
+} from "../inspection/neural-core-inspection-visibility.utils";
+import type { NeuralCoreCameraRenderingProfile } from "../inspection/neural-core-camera-rendering.types";
+import type { NeuralCoreElementVisualComposition } from "../inspection/neural-core-element-visual-composition.types";
+import { writeNeuralCoreElementVisualComposition } from "../inspection/neural-core-element-visual-composition.utils";
 
 const clampBufferValue = (value: number, minimum = 0, maximum = 1): number => {
   return Math.min(maximum, Math.max(minimum, Number.isFinite(value) ? value : minimum));
 };
 
 const DEFAULT_PACKED_COLOR = 0x8cf2ff;
+
+const PROPAGATION_VISUAL_COMPOSITION: NeuralCoreElementVisualComposition = {
+  opacity: 1,
+  brightness: 1,
+  scale: 1,
+  thickness: 1,
+};
 
 const createStringNumberRecord = (): Record<string, number> => {
   return Object.create(null) as Record<string, number>;
@@ -304,7 +317,8 @@ export const updateNeuralCorePropagationBuffers = (
   directionState: NeuralCoreSceneDirectionState,
   directionConfig: NeuralCoreSceneDirectionConfig,
   config: NeuralCorePropagationConfig,
-  visualDensity: NeuralCoreVisualDensityRuntime,
+  cameraProfile: NeuralCoreCameraRenderingProfile,
+  inspectionVisibility: NeuralCoreInspectionVisibilityState,
 ): { clusterPointCount: number; pulsePointCount: number } => {
   compileDirectionFocusLevels(buffers, directionState);
   let pulsePointCount = 0;
@@ -338,6 +352,25 @@ export const updateNeuralCorePropagationBuffers = (
       : focusLevel >= 2
         ? 1 + directionState.routeEmphasis * 0.28
         : focusLevel === 1 ? 1.08 : 0.92;
+    const pulseVisibilityRole = inspectionVisibility.enabled && focusLevel >= 1
+      ? "related"
+      : resolveNeuralCoreInspectionVisibilityRole(focusLevel);
+    const pulseComposition = writeNeuralCoreElementVisualComposition(
+      PROPAGATION_VISUAL_COMPOSITION,
+      pulseVisibilityRole,
+      "pulse",
+      clampBufferValue(pulse.opacity * focusOpacity),
+      1,
+      focusSize,
+      1,
+      1,
+      1,
+      1,
+      1,
+      cameraProfile,
+      inspectionVisibility,
+    );
+    const pulseOpacity = pulseComposition.opacity;
     const routeProgress = pulse.direction === "forward" ? pulse.progress : 1 - pulse.progress;
     for (
       let trailIndex = 0;
@@ -355,12 +388,11 @@ export const updateNeuralCorePropagationBuffers = (
         : routeProgress + trailOffset;
       const isHead = trailIndex === 0;
       const trailOpacity = clampBufferValue(
-        pulse.opacity
-          * focusOpacity
+        pulseOpacity
           * Math.pow(1 - trailFraction, config.pulse.trailOpacityFalloff),
       );
       const trailSize = pulse.size
-        * focusSize
+        * pulseComposition.scale
         * (isHead ? config.pulse.headScale : 1 - trailFraction * 0.54);
       const brightness = isHead ? config.pulse.headBrightness : 1;
       writeNeuralCoreRoutePositionAtProgress(
@@ -413,13 +445,22 @@ export const updateNeuralCorePropagationBuffers = (
       : focusLevel >= 2
         ? 1 + directionState.targetEmphasis * 0.24
         : focusLevel === 1 ? 1.06 : 0.92;
-    const densityOpacity = !visualDensity.enabled
-      ? 1
-      : focusLevel >= 2
-        ? visualDensity.internalConnectionEmphasis
-        : focusLevel === 1
-          ? visualDensity.relatedConnectionEmphasis
-          : visualDensity.unrelatedNodeOpacity;
+    const activationComposition = writeNeuralCoreElementVisualComposition(
+      PROPAGATION_VISUAL_COMPOSITION,
+      resolveNeuralCoreInspectionVisibilityRole(focusLevel),
+      "pulse",
+      clampBufferValue(opacity * focusOpacity),
+      1,
+      focusSize,
+      1,
+      1,
+      1,
+      1,
+      1,
+      cameraProfile,
+      inspectionVisibility,
+    );
+    const activationOpacity = activationComposition.opacity;
 
     for (const nodeId of region.nodeIds) {
       if (nodeId >= 0 && nodeId < buffers.nodeActivationById.length) {
@@ -441,8 +482,8 @@ export const updateNeuralCorePropagationBuffers = (
         red,
         green,
         blue,
-        clampBufferValue(opacity * focusOpacity * densityOpacity),
-        size * focusSize,
+        activationOpacity,
+        size * activationComposition.scale,
       );
       clusterPointCount += 1;
     }

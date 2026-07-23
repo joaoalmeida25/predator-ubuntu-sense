@@ -1,4 +1,7 @@
 .corePanel {
+  --neural-core-micro-focus: 0;
+  --neural-core-base-visibility: 1;
+  --neural-core-global-glow-visibility: 1;
   position: relative;
   display: grid;
   min-height: 0;
@@ -12,6 +15,28 @@
     radial-gradient(circle at 58% 36%, rgba(38, 217, 255, 0.12), transparent 24%),
     linear-gradient(145deg, rgba(8, 11, 26, 0.82), rgba(3, 6, 18, 0.72));
   box-shadow: var(--shadow-panel), var(--shadow-glow);
+}
+
+.inspectionPeripheralUi,
+.inspectionGlobalGlow,
+.inspectionBaseDecoration {
+  transition: filter 180ms ease, opacity 180ms ease;
+}
+
+.corePanel[data-selection-active="true"] .inspectionPeripheralUi {
+  filter: opacity(calc(1 - var(--neural-core-micro-focus) * 0.28));
+}
+
+.corePanel[data-selection-active="true"] .inspectionGlobalGlow {
+  filter: opacity(var(--neural-core-global-glow-visibility));
+}
+
+.corePanel[data-selection-active="true"] .energyColumn.inspectionGlobalGlow {
+  filter: blur(8px) opacity(var(--neural-core-global-glow-visibility));
+}
+
+.corePanel[data-selection-active="true"] .inspectionBaseDecoration {
+  filter: opacity(var(--neural-core-base-visibility));
 }
 
 .corePanel::before {

@@ -96,6 +96,8 @@ export interface NeuralCoreSceneViewProps {
   coreRef: RefObject<Group | null>;
   focusHaloMaterialRef: RefObject<MeshBasicMaterial | null>;
   focusHaloRef: RefObject<Mesh | null>;
+  selectedEnvelopeMaterialRef: RefObject<ShaderMaterial | null>;
+  selectedEnvelopeRef: RefObject<Mesh | null>;
   hubRef: RefObject<Group | null>;
   hubs: NeuralCoreNode[];
   networkRef: RefObject<Group | null>;
@@ -130,4 +132,5 @@ export interface NeuralCoreSceneViewProps {
   semanticRibbonField: NeuralCoreSemanticRibbonField;
   semanticRibbonMaterialRef: RefObject<ShaderMaterial | null>;
   semanticVisualizationConfig: NeuralCoreSemanticVisualizationConfig;
+  stableFunctionalBlending: boolean;
 }

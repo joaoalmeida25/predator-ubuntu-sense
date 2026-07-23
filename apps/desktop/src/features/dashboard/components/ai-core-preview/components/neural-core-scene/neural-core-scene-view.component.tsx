@@ -1,5 +1,10 @@
 import type { ReactElement } from "react";
-import { AdditiveBlending, Color, DoubleSide } from "three";
+import {
+  AdditiveBlending,
+  Color,
+  DoubleSide,
+  NormalBlending,
+} from "three";
 import { Html } from "@react-three/drei";
 
 import type { NeuralCoreSceneViewProps } from "./neural-core-scene-view.types";
@@ -129,6 +134,7 @@ const BASE_NODE_VERTEX_SHADER = `
   uniform float uBasePointSize;
   uniform float uPointScale;
   uniform float uBaseOpacity;
+  uniform float uMinimumScreenSize;
   uniform float uMaximumScreenSize;
   uniform float uMaximumJitterDistance;
   uniform float uMaximumFragmentationDistance;
@@ -195,7 +201,7 @@ const BASE_NODE_VERTEX_SHADER = `
     );
     gl_PointSize = clamp(
       pointSize * (uPointScale / max(0.1, -mvPosition.z)),
-      1.0,
+      uMinimumScreenSize,
       uMaximumScreenSize
     );
     gl_Position = projectionMatrix * mvPosition;
@@ -360,6 +366,35 @@ const SEMANTIC_RIBBON_FRAGMENT_SHADER = `
   }
 `;
 
+const SELECTED_CLUSTER_ENVELOPE_VERTEX_SHADER = `
+  varying vec3 vNormal;
+  varying vec3 vViewDirection;
+
+  void main() {
+    vec4 viewPosition = modelViewMatrix * vec4(position, 1.0);
+    vNormal = normalize(normalMatrix * normal);
+    vViewDirection = normalize(-viewPosition.xyz);
+    gl_Position = projectionMatrix * viewPosition;
+  }
+`;
+
+const SELECTED_CLUSTER_ENVELOPE_FRAGMENT_SHADER = `
+  uniform vec3 uColor;
+  uniform float uOpacity;
+  uniform float uEdgeSoftness;
+  varying vec3 vNormal;
+  varying vec3 vViewDirection;
+
+  void main() {
+    float facing = abs(dot(normalize(vNormal), normalize(vViewDirection)));
+    float edgePower = mix(1.25, 4.2, clamp(uEdgeSoftness, 0.0, 1.0));
+    float edge = pow(1.0 - facing, edgePower);
+    float alpha = uOpacity * edge;
+    if (alpha <= 0.001) discard;
+    gl_FragColor = vec4(uColor * (0.72 + edge * 0.18), alpha);
+  }
+`;
+
 export const NeuralCoreSceneView = ({
   ambientPulseMaterialRef,
   baseRef,
@@ -378,6 +413,8 @@ export const NeuralCoreSceneView = ({
   coreRef,
   focusHaloMaterialRef,
   focusHaloRef,
+  selectedEnvelopeMaterialRef,
+  selectedEnvelopeRef,
   hubRef,
   hubs,
   networkRef,
@@ -403,7 +440,11 @@ export const NeuralCoreSceneView = ({
   semanticRibbonField,
   semanticRibbonMaterialRef,
   semanticVisualizationConfig,
+  stableFunctionalBlending,
 }: NeuralCoreSceneViewProps): ReactElement => {
+  const functionalBlending = stableFunctionalBlending
+    ? NormalBlending
+    : AdditiveBlending;
   return (
     <>
       {inspectionCameraControls}
@@ -411,19 +452,19 @@ export const NeuralCoreSceneView = ({
       <group ref={baseRef} position={[0, -1.74, 0]}>
         <mesh rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[1.48, 0.0065, 8, 192]} />
-          <meshBasicMaterial color="#26d9ff" transparent opacity={0.34} blending={AdditiveBlending} depthWrite={false} />
+          <meshBasicMaterial color="#26d9ff" transparent opacity={0.34} blending={AdditiveBlending} depthWrite={false} userData={{ baseOpacity: 0.34 }} />
         </mesh>
         <mesh rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[0.88, 0.0048, 8, 160]} />
-          <meshBasicMaterial color="#8a6dff" transparent opacity={0.16} blending={AdditiveBlending} depthWrite={false} />
+          <meshBasicMaterial color="#8a6dff" transparent opacity={0.16} blending={AdditiveBlending} depthWrite={false} userData={{ baseOpacity: 0.16 }} />
         </mesh>
         <mesh rotation={[Math.PI / 2, 0, 0]}>
           <circleGeometry args={[1.12, 96]} />
-          <meshBasicMaterial color="#26d9ff" transparent opacity={0.052} blending={AdditiveBlending} depthWrite={false} />
+          <meshBasicMaterial color="#26d9ff" transparent opacity={0.052} blending={AdditiveBlending} depthWrite={false} userData={{ baseOpacity: 0.052 }} />
         </mesh>
         <mesh position={[0, 0.32, 0]}>
           <coneGeometry args={[0.78, 1.72, 72, 1, true]} />
-          <meshBasicMaterial color="#26d9ff" transparent opacity={0.035} blending={AdditiveBlending} depthWrite={false} />
+          <meshBasicMaterial color="#26d9ff" transparent opacity={0.035} blending={AdditiveBlending} depthWrite={false} userData={{ baseOpacity: 0.035 }} />
         </mesh>
       </group>
 
@@ -431,7 +472,7 @@ export const NeuralCoreSceneView = ({
         {rings.map((ring) => (
           <mesh key={ring.id} rotation={ring.rotation} userData={{ speed: ring.speed, phase: ring.phase }}>
             <torusGeometry args={[ring.radius, ring.tubeRadius, 8, 224]} />
-            <meshBasicMaterial color={ring.color} transparent opacity={ring.opacity} blending={AdditiveBlending} depthWrite={false} />
+            <meshBasicMaterial color={ring.color} transparent opacity={ring.opacity} blending={AdditiveBlending} depthWrite={false} userData={{ baseOpacity: ring.opacity }} />
           </mesh>
         ))}
       </group>
@@ -486,7 +527,7 @@ export const NeuralCoreSceneView = ({
               }}
               fog
               transparent
-              blending={AdditiveBlending}
+              blending={functionalBlending}
               depthWrite={false}
             />
           </lineSegments>
@@ -558,7 +599,7 @@ export const NeuralCoreSceneView = ({
           }}
           transparent
           side={DoubleSide}
-          blending={AdditiveBlending}
+          blending={functionalBlending}
           depthWrite={false}
         />
       </mesh>
@@ -612,6 +653,7 @@ export const NeuralCoreSceneView = ({
                 uBasePointSize: { value: cloud.size },
                 uPointScale: { value: 300 },
                 uBaseOpacity: { value: cloud.opacity },
+                uMinimumScreenSize: { value: 1 },
                 uMaximumScreenSize: { value: 12 },
                 uMaximumJitterDistance: {
                   value: semanticVisualizationConfig.cluster.maximumJitterDistance,
@@ -759,6 +801,7 @@ export const NeuralCoreSceneView = ({
                 color={hub.color}
                 transparent
                 opacity={0.9}
+                fog
                 blending={AdditiveBlending}
                 depthWrite={false}
                 userData={{ baseColor: getLinearHexColor(hub.color), baseOpacity: 0.9 }}
@@ -770,6 +813,7 @@ export const NeuralCoreSceneView = ({
                 color={hub.color}
                 transparent
                 opacity={0.12}
+                fog
                 blending={AdditiveBlending}
                 depthWrite={false}
                 userData={{ baseColor: getLinearHexColor(hub.color), baseOpacity: 0.12 }}
@@ -798,6 +842,7 @@ export const NeuralCoreSceneView = ({
                 color={node.color}
                 transparent
                 opacity={0.98}
+                fog
                 blending={AdditiveBlending}
                 depthWrite={false}
                 userData={{ baseColor: getLinearHexColor(node.color), baseOpacity: 0.98 }}
@@ -809,6 +854,7 @@ export const NeuralCoreSceneView = ({
                 color="#26d9ff"
                 transparent
                 opacity={0.24}
+                fog
                 blending={AdditiveBlending}
                 depthWrite={false}
                 userData={{ baseColor: getLinearHexColor("#26d9ff"), baseOpacity: 0.24 }}
@@ -820,6 +866,7 @@ export const NeuralCoreSceneView = ({
                 color="#8a6dff"
                 transparent
                 opacity={0.085}
+                fog
                 blending={AdditiveBlending}
                 depthWrite={false}
                 userData={{ baseColor: getLinearHexColor("#8a6dff"), baseOpacity: 0.085 }}
@@ -838,6 +885,24 @@ export const NeuralCoreSceneView = ({
           transparent
           opacity={0}
           blending={AdditiveBlending}
+          depthTest
+          depthWrite={false}
+        />
+      </mesh>
+
+      <mesh ref={selectedEnvelopeRef} visible={false} renderOrder={-2}>
+        <sphereGeometry args={[1, 36, 24]} />
+        <shaderMaterial
+          ref={selectedEnvelopeMaterialRef}
+          vertexShader={SELECTED_CLUSTER_ENVELOPE_VERTEX_SHADER}
+          fragmentShader={SELECTED_CLUSTER_ENVELOPE_FRAGMENT_SHADER}
+          uniforms={{
+            uColor: { value: new Color("#82efff") },
+            uOpacity: { value: 0 },
+            uEdgeSoftness: { value: 0.58 },
+          }}
+          transparent
+          side={DoubleSide}
           depthTest={false}
           depthWrite={false}
         />
