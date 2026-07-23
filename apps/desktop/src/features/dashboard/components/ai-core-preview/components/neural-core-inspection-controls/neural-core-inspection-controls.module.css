@@ -1,0 +1,66 @@
+.controls {
+  position: absolute;
+  z-index: 12;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  max-width: calc(100% - 16px);
+  align-items: center;
+  gap: 5px;
+  border: 1px solid rgba(98, 224, 255, 0.2);
+  border-radius: 999px;
+  padding: 4px;
+  background: rgba(5, 11, 27, 0.78);
+  box-shadow: 0 8px 24px rgba(0, 4, 18, 0.28);
+  backdrop-filter: blur(12px);
+}
+
+.controls button {
+  min-height: 25px;
+  border: 1px solid rgba(109, 217, 255, 0.22);
+  border-radius: 999px;
+  padding: 0 9px;
+  color: rgba(218, 246, 255, 0.9);
+  background: rgba(28, 44, 76, 0.6);
+  font: inherit;
+  font-size: 8px;
+  font-weight: 820;
+  letter-spacing: 0.025em;
+  cursor: pointer;
+}
+
+.controls button:hover {
+  border-color: rgba(109, 230, 255, 0.5);
+  background: rgba(36, 69, 105, 0.72);
+}
+
+.controls button:focus-visible {
+  outline: 2px solid rgba(111, 229, 255, 0.82);
+  outline-offset: 2px;
+}
+
+.primaryButton {
+  color: #e7fbff !important;
+  background: linear-gradient(135deg, rgba(28, 158, 199, 0.52), rgba(111, 63, 201, 0.48)) !important;
+}
+
+.modeLabel {
+  padding: 0 6px;
+  color: rgba(137, 235, 255, 0.88);
+  font-size: 7.5px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+@media (max-width: 1380px), (max-height: 780px) {
+  .modeLabel {
+    display: none;
+  }
+
+  .controls button {
+    padding: 0 7px;
+    font-size: 7.5px;
+  }
+}

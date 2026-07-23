@@ -6,7 +6,8 @@ import type {
   AiCorePreviewNode,
   AiCorePreviewViewProps,
 } from "./ai-core-preview-view.types";
-import { NeuralCoreCanvas } from "./neural-core-canvas/neural-core-canvas.component";
+import { NeuralCoreCanvas } from "./components/neural-core-canvas/neural-core-canvas.component";
+import { NeuralCoreNarrativeOverlay } from "./components/neural-core-narrative-overlay/neural-core-narrative-overlay.component";
 
 const getNodeStyle = (node: AiCorePreviewNode): CSSProperties => {
   return {
@@ -20,9 +21,42 @@ export const AiCorePreviewView = ({
   neuralLines,
   neuralNodes,
   callouts,
+  demoControls,
+  contextPanel,
+  inspectionControls,
+  inspectionConfig,
+  inspectionFocus,
+  inspectionState,
+  cameraResetRevision,
+  choreography,
+  narrative,
+  narrativeConfig,
+  narrativeState,
+  onNarrativeStateChange,
+  onCameraTransitioningChange,
+  onKeyDown,
+  onSelectCluster,
+  topology,
+  propagationConfig,
+  sceneDirection,
+  sceneDirectionConfig,
+  sceneMotionConfig,
+  semanticVisualizationConfig,
+  clusterLabelConfig,
+  lodConfig,
+  spatialMap,
+  spatialLayoutConfig,
+  onPropagationEvent,
+  runtimeScenarioKey,
 }: AiCorePreviewViewProps): ReactElement => {
   return (
-    <section className={styles.corePanel} aria-label="AI Core preview">
+    <section
+      className={styles.corePanel}
+      aria-label="AI Core preview"
+      data-neural-core-label-boundary
+      data-interaction-mode={inspectionState.mode}
+      onKeyDown={onKeyDown}
+    >
       <div className={styles.panelHeader}>
         <p className={styles.eyebrow}>Predator AI Core</p>
         <h2 className={styles.title}>Adaptive Neural Runtime</h2>
@@ -38,12 +72,44 @@ export const AiCorePreviewView = ({
 
         <NeuralCoreCanvas
           fallback={<NeuralCoreFallback neuralLines={neuralLines} neuralNodes={neuralNodes} />}
+          choreography={choreography}
+          narrative={narrative}
+          narrativeConfig={narrativeConfig}
+          onNarrativeStateChange={onNarrativeStateChange}
+          topology={topology}
+          propagationConfig={propagationConfig}
+          sceneDirection={sceneDirection}
+          sceneDirectionConfig={sceneDirectionConfig}
+          sceneMotionConfig={sceneMotionConfig}
+          semanticVisualizationConfig={semanticVisualizationConfig}
+          clusterLabelConfig={clusterLabelConfig}
+          lodConfig={lodConfig}
+          spatialMap={spatialMap}
+          spatialLayoutConfig={spatialLayoutConfig}
+          onPropagationEvent={onPropagationEvent}
+          runtimeScenarioKey={runtimeScenarioKey}
+          inspectionConfig={inspectionConfig}
+          inspectionFocus={inspectionFocus}
+          inspectionState={inspectionState}
+          cameraResetRevision={cameraResetRevision}
+          onCameraTransitioningChange={onCameraTransitioningChange}
+          onSelectCluster={onSelectCluster}
         />
+
+        <NeuralCoreNarrativeOverlay
+          config={narrativeConfig}
+          state={narrativeState}
+        />
+
+        {inspectionControls}
+        {contextPanel}
 
         <div className={styles.energyColumn} />
         <div className={styles.baseRing} />
         <div className={styles.baseRingTwo} />
       </div>
+
+      {demoControls}
 
       <div className={styles.futureNote}>
         <span>AI Optimization</span>
@@ -99,7 +165,10 @@ const TelemetryCallout = ({
   detail,
 }: AiCorePreviewCallout): ReactElement => {
   return (
-    <div className={`${styles.callout} ${className}`}>
+    <div
+      className={`${styles.callout} ${className}`}
+      data-neural-core-label-exclusion
+    >
       <span>{label}</span>
       <strong>{value}</strong>
       <small>{detail}</small>

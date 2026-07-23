@@ -1,0 +1,87 @@
+.overlay {
+  position: absolute;
+  bottom: 4%;
+  left: 26%;
+  z-index: 8;
+  width: min(250px, 42%);
+  pointer-events: none;
+  border-left: 2px solid rgba(93, 231, 255, 0.72);
+  border-radius: 0 10px 10px 0;
+  padding: 9px 12px 9px 13px;
+  color: var(--color-text);
+  background: linear-gradient(90deg, rgba(5, 12, 29, 0.92), rgba(5, 12, 29, 0.58));
+  box-shadow: 0 9px 26px rgba(1, 5, 18, 0.28);
+  opacity: 0;
+  animation-name: narrativeFadeIn, narrativeFadeOut;
+  animation-duration: var(--narrative-fade-in), var(--narrative-fade-out);
+  animation-delay: 0s, var(--narrative-fade-out-delay);
+  animation-timing-function: ease-out, ease-in;
+  animation-fill-mode: forwards, forwards;
+}
+
+.overlay strong {
+  display: block;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.overlay p {
+  overflow: hidden;
+  margin: 4px 0 0;
+  color: rgba(207, 224, 245, 0.76);
+  font-size: 10px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.progress {
+  display: block;
+  margin-bottom: 4px;
+  color: rgba(93, 231, 255, 0.82);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+@keyframes narrativeFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes narrativeFadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+}
+
+@media (max-width: 1380px) {
+  .overlay {
+    bottom: 3%;
+    width: min(230px, 42%);
+    padding: 7px 10px;
+  }
+
+  .overlay p {
+    display: none;
+  }
+}

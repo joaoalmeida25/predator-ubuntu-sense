@@ -46,6 +46,19 @@ export const DashboardView = ({
         />
 
         <AiCorePreview
+          inspectionEnabled
+          showDemoControls
+          showNarrativeOverlay
+          showClusterLabels
+          autoRotate={false}
+          lodConfig={{
+            distance: { detailMaximum: 3.74, summaryMaximum: 4.18 },
+            limits: {
+              maximumOverviewClusters: 4,
+              maximumSummaryClusters: 3,
+              maximumDetailClusters: 1,
+            },
+          }}
           nodeCountLabel={aiCoreTelemetry.nodeCountLabel}
           modelStatus={aiCoreTelemetry.modelStatus}
           learningRate={aiCoreTelemetry.learningRate}
