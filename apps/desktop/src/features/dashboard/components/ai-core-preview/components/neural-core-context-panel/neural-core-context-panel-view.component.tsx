@@ -44,7 +44,9 @@ export const NeuralCoreContextPanelView = ({
 }: NeuralCoreContextPanelViewProps): ReactElement => {
   const hasRelationships = model.relatedClusters.length > 0
     || model.synapses.length > 0
-    || model.pathways.length > 0;
+    || model.pathways.length > 0
+    || model.incomingRoutes.length > 0
+    || model.outgoingRoutes.length > 0;
   const panelStyle: NeuralCoreContextPanelStyle = {
     "--neural-core-context-panel-width": `${widthPx}px`,
     "--neural-core-context-panel-compact-width": `${compactWidthPx}px`,
@@ -121,7 +123,17 @@ export const NeuralCoreContextPanelView = ({
         ) : null}
         {hasRelationships ? (
           <section>
-            <h4>Relationships</h4>
+            <h4>
+              {model.aggregatedConnectionCount === undefined
+                ? "Relationships"
+                : `Relationships · ${model.aggregatedConnectionCount} routes`}
+            </h4>
+            {model.incomingRoutes.length > 0 ? (
+              <RelationshipGroup label="Input routes" values={model.incomingRoutes} />
+            ) : null}
+            {model.outgoingRoutes.length > 0 ? (
+              <RelationshipGroup label="Output routes" values={model.outgoingRoutes} />
+            ) : null}
             {model.relatedClusters.length > 0 ? (
               <RelationshipGroup label="Components" values={model.relatedClusters} />
             ) : null}

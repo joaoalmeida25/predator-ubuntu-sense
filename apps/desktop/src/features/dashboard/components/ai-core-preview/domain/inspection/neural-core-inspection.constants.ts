@@ -63,14 +63,14 @@ export const DEFAULT_NEURAL_CORE_INSPECTION_CONFIG: NeuralCoreInspectionConfig =
         emphasis: 1.08,
       },
       related: {
-        minimumNodeOpacity: 0.52,
-        minimumConnectionOpacity: 0.46,
-        minimumPulseOpacity: 0.58,
-        emphasis: 1.04,
+        minimumNodeOpacity: 0.62,
+        minimumConnectionOpacity: 0.56,
+        minimumPulseOpacity: 0.68,
+        emphasis: 1.06,
       },
       context: {
-        minimumNodeOpacity: 0.16,
-        minimumConnectionOpacity: 0.12,
+        minimumNodeOpacity: 0.3,
+        minimumConnectionOpacity: 0.26,
       },
       ambient: {
         minimumOpacity: 0.03,
@@ -82,10 +82,10 @@ export const DEFAULT_NEURAL_CORE_INSPECTION_CONFIG: NeuralCoreInspectionConfig =
       },
     },
     relatedConnections: {
-      minimumOpacity: 0.46,
-      minimumThickness: 0.92,
-      protagonistThicknessMultiplier: 1.16,
-      relatedThicknessMultiplier: 1.06,
+      minimumOpacity: 0.56,
+      minimumThickness: 0.96,
+      protagonistThicknessMultiplier: 1.22,
+      relatedThicknessMultiplier: 1.08,
     },
     selectedClusterEnvelope: {
       enabled: false,
@@ -95,9 +95,9 @@ export const DEFAULT_NEURAL_CORE_INSPECTION_CONFIG: NeuralCoreInspectionConfig =
       pulseInfluence: 0.08,
     },
     decoration: {
-      microArcOpacity: 0.055,
-      microBaseOpacity: 0.075,
-      microGlobalGlowOpacity: 0.1,
+      microArcOpacity: 0.08,
+      microBaseOpacity: 0.12,
+      microGlobalGlowOpacity: 0.32,
     },
     transitionDamping: 8.5,
   },

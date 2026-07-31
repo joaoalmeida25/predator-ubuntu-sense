@@ -23,6 +23,12 @@ import {
   resolveNeuralCoreSceneDirectionConfig,
   resolveNeuralCoreSceneMotionConfig,
 } from "./visualization/direction/neural-core-scene-direction.utils";
+import {
+  resolveNeuralCoreClusterGrammarConfig,
+} from "./visualization/cluster-grammar/neural-core-cluster-grammar.utils";
+import {
+  resolveNeuralCoreSemanticFocusLensConfig,
+} from "./visualization/focus-lens/neural-core-semantic-focus-lens.utils";
 import { EMPTY_NEURAL_CORE_NARRATIVE_STATE } from "./domain/narrative/neural-core-narrative.constants";
 import type { NeuralCoreNarrativeState } from "./domain/narrative/neural-core-narrative.types";
 import { resolveNeuralCoreNarrativeConfig } from "./domain/narrative/neural-core-narrative.utils";
@@ -95,6 +101,8 @@ export const AiCorePreview = ({
   showClusterLabels,
   clusterLabelConfig,
   lodConfig,
+  clusterGrammarConfig,
+  semanticFocusLensConfig,
   demoScenario,
   defaultDemoScenario = DEFAULT_NEURAL_CORE_DEMO_SCENARIO,
   showDemoControls = false,
@@ -155,6 +163,12 @@ export const AiCorePreview = ({
   const resolvedLodConfig = useMemo(() => {
     return resolveNeuralCoreLodConfig(lodConfig);
   }, [lodConfig]);
+  const resolvedClusterGrammarConfig = useMemo(() => {
+    return resolveNeuralCoreClusterGrammarConfig(clusterGrammarConfig);
+  }, [clusterGrammarConfig]);
+  const resolvedSemanticFocusLensConfig = useMemo(() => {
+    return resolveNeuralCoreSemanticFocusLensConfig(semanticFocusLensConfig);
+  }, [semanticFocusLensConfig]);
   const resolvedSceneDirectionConfig = useMemo(() => {
     return resolveNeuralCoreSceneDirectionConfig(sceneDirectionConfig);
   }, [sceneDirectionConfig]);
@@ -241,6 +255,7 @@ export const AiCorePreview = ({
         && topology
           ? (
             <NeuralCoreContextPanel
+              clusterGrammarEnabled={resolvedClusterGrammarConfig.enabled}
               config={resolvedInspectionConfig.panel}
               focus={inspection.focus}
               topology={topology}
@@ -278,6 +293,8 @@ export const AiCorePreview = ({
       semanticVisualizationConfig={resolvedSemanticVisualizationConfig}
       clusterLabelConfig={resolvedClusterLabelConfig}
       lodConfig={resolvedLodConfig}
+      clusterGrammarConfig={resolvedClusterGrammarConfig}
+      semanticFocusLensConfig={resolvedSemanticFocusLensConfig}
       spatialMap={spatialMap}
       spatialLayoutConfig={resolvedSpatialLayoutConfig}
       onPropagationEvent={onPropagationEvent}

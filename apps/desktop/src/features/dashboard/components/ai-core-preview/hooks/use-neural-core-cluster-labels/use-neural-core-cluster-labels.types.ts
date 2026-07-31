@@ -36,6 +36,8 @@ export interface AdvanceNeuralCoreClusterLabelsParams {
   isContextPanelOpen: boolean;
   network: Group | null;
   viewport: { width: number; height: number };
+  clusterGrammarEnabled?: boolean;
+  clusterGrammarVisibleTerritoryIds?: readonly string[];
 }
 
 export interface UseNeuralCoreClusterLabelsResult {

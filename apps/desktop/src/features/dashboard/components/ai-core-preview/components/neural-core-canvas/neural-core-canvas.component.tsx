@@ -17,6 +17,8 @@ export const NeuralCoreCanvas = ({
   semanticVisualizationConfig,
   clusterLabelConfig,
   lodConfig,
+  clusterGrammarConfig,
+  semanticFocusLensConfig,
   spatialMap,
   spatialLayoutConfig,
   onPropagationEvent,
@@ -43,6 +45,8 @@ export const NeuralCoreCanvas = ({
       semanticVisualizationConfig={semanticVisualizationConfig}
       clusterLabelConfig={clusterLabelConfig}
       lodConfig={lodConfig}
+      clusterGrammarConfig={clusterGrammarConfig}
+      semanticFocusLensConfig={semanticFocusLensConfig}
       spatialMap={spatialMap}
       spatialLayoutConfig={spatialLayoutConfig}
       onPropagationEvent={onPropagationEvent}

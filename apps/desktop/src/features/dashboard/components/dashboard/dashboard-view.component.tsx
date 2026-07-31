@@ -50,6 +50,8 @@ export const DashboardView = ({
           showDemoControls
           showNarrativeOverlay
           showClusterLabels
+          clusterGrammarConfig={{ enabled: true }}
+          semanticFocusLensConfig={{ enabled: true }}
           autoRotate={false}
           lodConfig={{
             distance: { detailMaximum: 3.74, summaryMaximum: 4.18 },

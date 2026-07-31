@@ -107,10 +107,12 @@ const getLabelContextKey = (
 
 const getInspectionKey = (
   params: AdvanceNeuralCoreClusterLabelsParams,
-): string => params.interactionMode === "inspection"
+): string => `${params.clusterGrammarEnabled
+  ? params.clusterGrammarVisibleTerritoryIds?.join(",") ?? "none"
+  : "legacy"}:` + (params.interactionMode === "inspection"
   ? `inspection:${params.inspectionFocus.selectedClusterId ?? "overview"}`
     + `:${params.inspectionFocus.relatedClusterIds.join(",")}`
-  : getLabelContextKey(params.directionState, params.narrativeState);
+  : getLabelContextKey(params.directionState, params.narrativeState));
 
 const dampVisualValue = (
   current: number,
@@ -464,7 +466,7 @@ export const useNeuralCoreClusterLabels = ({
       config: lodConfigRef.current,
     });
     const lodState = stabilizeLodState(rawLodState, protagonistClusterId);
-    const nextModels = mapNeuralCoreClusterLabelModels({
+    const mappedModels = mapNeuralCoreClusterLabelModels({
       topology: topologyValue,
       lodState,
       focusedClusterIds,
@@ -475,6 +477,11 @@ export const useNeuralCoreClusterLabels = ({
         : undefined,
       config: currentConfig,
     });
+    const nextModels = params.clusterGrammarEnabled
+      ? mappedModels.filter((model) => {
+        return params.clusterGrammarVisibleTerritoryIds?.includes(model.clusterId) ?? false;
+      })
+      : mappedModels;
     const activeIds = new Set<string>();
     for (const model of nextModels) {
       activeIds.add(model.clusterId);

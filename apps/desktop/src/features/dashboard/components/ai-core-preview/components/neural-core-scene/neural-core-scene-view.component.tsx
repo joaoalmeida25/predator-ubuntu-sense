@@ -122,6 +122,7 @@ const BASE_NODE_VERTEX_SHADER = `
   attribute float aSemanticColorInfluence;
   attribute float aSemanticScale;
   attribute float aSemanticOpacity;
+  attribute float aClusterGrammarOpacity;
   attribute float aSemanticJitter;
   attribute float aSemanticFragmentation;
   attribute float aSemanticDecay;
@@ -185,7 +186,8 @@ const BASE_NODE_VERTEX_SHADER = `
     float pointSize = uBasePointSize * aSemanticScale * (1.0 - sizeDecay * 0.68)
       * (1.0 + aSemanticFill * 0.26) * pulse;
     vColor = mix(color, aSemanticTint, aSemanticColorInfluence);
-    vOpacity = uBaseOpacity * aSemanticOpacity * (1.0 - opacityDecay * 0.96);
+    vOpacity = uBaseOpacity * aSemanticOpacity * aClusterGrammarOpacity
+      * (1.0 - opacityDecay * 0.96);
     vFill = aSemanticFill;
     vBrightness = aSemanticBrightness * (1.0 - brightnessDecay * 0.55);
     vSemanticPresence = clamp(
@@ -244,13 +246,14 @@ const BASE_NODE_FRAGMENT_SHADER = `
 const BASE_CONNECTION_VERTEX_SHADER = `
   attribute vec3 aSemanticColor;
   attribute float aSemanticOpacity;
+  attribute float aClusterGrammarOpacity;
   varying vec3 vColor;
   varying float vOpacity;
   #include <fog_pars_vertex>
 
   void main() {
     vColor = aSemanticColor;
-    vOpacity = aSemanticOpacity;
+    vOpacity = aSemanticOpacity * aClusterGrammarOpacity;
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
     gl_Position = projectionMatrix * mvPosition;
     #include <fog_vertex>
@@ -278,6 +281,7 @@ const SEMANTIC_RIBBON_VERTEX_SHADER = `
   attribute float aSide;
   attribute float aThickness;
   attribute float aSemanticOpacity;
+  attribute float aClusterGrammarOpacity;
   attribute float aSemanticInstability;
   attribute float aSemanticFragmentation;
   attribute float aSemanticInterruption;
@@ -287,6 +291,7 @@ const SEMANTIC_RIBBON_VERTEX_SHADER = `
   attribute float aRouteProgress;
   uniform vec2 uResolution;
   uniform float uTime;
+  uniform float uFocusLensThickness;
   varying vec3 vColor;
   varying float vOpacity;
   varying float vInstability;
@@ -307,13 +312,13 @@ const SEMANTIC_RIBBON_VERTEX_SHADER = `
     float thicknessWave = sin(
       aRouteProgress * 18.0 + aRouteSeed * 31.0 + uTime * 0.85
     );
-    float stableThickness = aThickness
+    float stableThickness = aThickness * uFocusLensThickness
       * (1.0 + thicknessWave * aSemanticInstability * 0.08);
     vec2 pixelOffset = normal * aSide * stableThickness * 2.0
       / max(uResolution, vec2(1.0));
     currentClip.xy += pixelOffset * currentClip.w;
     vColor = color;
-    vOpacity = aSemanticOpacity;
+    vOpacity = aSemanticOpacity * aClusterGrammarOpacity;
     vInstability = aSemanticInstability;
     vFragmentation = aSemanticFragmentation;
     vInterruption = aSemanticInterruption;
@@ -441,6 +446,11 @@ export const NeuralCoreSceneView = ({
   semanticRibbonMaterialRef,
   semanticVisualizationConfig,
   stableFunctionalBlending,
+  clusterGrammarBufferState,
+  clusterGrammarConnectionOpacityRefs,
+  clusterGrammarNodeOpacityRefs,
+  clusterGrammarRibbonOpacityRef,
+  clusterGrammarVisuals,
 }: NeuralCoreSceneViewProps): ReactElement => {
   const functionalBlending = stableFunctionalBlending
     ? NormalBlending
@@ -449,6 +459,7 @@ export const NeuralCoreSceneView = ({
     <>
       {inspectionCameraControls}
       <group ref={networkRef}>
+      {clusterGrammarVisuals}
       <group ref={baseRef} position={[0, -1.74, 0]}>
         <mesh rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[1.48, 0.0065, 8, 192]} />
@@ -516,6 +527,11 @@ export const NeuralCoreSceneView = ({
                 attach="attributes-aSemanticOpacity"
                 args={[semanticField.opacities, 1]}
               />
+              <bufferAttribute
+                ref={clusterGrammarConnectionOpacityRefs[bufferIndex]}
+                attach="attributes-aClusterGrammarOpacity"
+                args={[clusterGrammarBufferState.connectionOpacities[bufferIndex], 1]}
+              />
             </bufferGeometry>
             <shaderMaterial
               vertexShader={BASE_CONNECTION_VERTEX_SHADER}
@@ -556,6 +572,11 @@ export const NeuralCoreSceneView = ({
             args={[semanticRibbonField.opacities, 1]}
           />
           <bufferAttribute
+            ref={clusterGrammarRibbonOpacityRef}
+            attach="attributes-aClusterGrammarOpacity"
+            args={[clusterGrammarBufferState.ribbonOpacities, 1]}
+          />
+          <bufferAttribute
             ref={semanticRibbonAttributeRefs.instability}
             attach="attributes-aSemanticInstability"
             args={[semanticRibbonField.instabilities, 1]}
@@ -592,6 +613,7 @@ export const NeuralCoreSceneView = ({
           fragmentShader={SEMANTIC_RIBBON_FRAGMENT_SHADER}
           uniforms={{
             uTime: { value: 0 },
+            uFocusLensThickness: { value: 1 },
             uResolution: { value: { x: 1560, y: 840 } },
             uMaximumOpacityVariation: {
               value: semanticVisualizationConfig.failure.maximumRouteOpacityVariation,
@@ -624,6 +646,11 @@ export const NeuralCoreSceneView = ({
               />
               <bufferAttribute attach="attributes-aSemanticScale" args={[semanticField.scales, 1]} />
               <bufferAttribute attach="attributes-aSemanticOpacity" args={[semanticField.opacities, 1]} />
+              <bufferAttribute
+                ref={clusterGrammarNodeOpacityRefs[cloudIndex]}
+                attach="attributes-aClusterGrammarOpacity"
+                args={[clusterGrammarBufferState.pointCloudOpacities[cloudIndex], 1]}
+              />
               <bufferAttribute attach="attributes-aSemanticJitter" args={[semanticField.jitters, 1]} />
               <bufferAttribute
                 attach="attributes-aSemanticFragmentation"

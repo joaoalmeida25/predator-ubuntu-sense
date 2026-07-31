@@ -1,12 +1,14 @@
 import { OrbitControls } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import {
+  createRef,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   type ComponentRef,
   type ReactElement,
+  type RefObject,
 } from "react";
 import { Color, Fog, type
   BufferAttribute,
@@ -86,6 +88,41 @@ import {
 } from "../../visualization/inspection/neural-core-camera-rendering.utils";
 import type { NeuralCoreElementVisualComposition } from "../../visualization/inspection/neural-core-element-visual-composition.types";
 import { writeNeuralCoreElementVisualComposition } from "../../visualization/inspection/neural-core-element-visual-composition.utils";
+import { mapNeuralCoreClusterGrammar } from "../../visualization/cluster-grammar/neural-core-cluster-grammar.mapper";
+import {
+  createNeuralCoreClusterGrammarBufferState,
+  createNeuralCoreClusterGrammarRuntime,
+  updateNeuralCoreClusterGrammarBuffers,
+  updateNeuralCoreClusterGrammarRuntime,
+} from "../../visualization/cluster-grammar/neural-core-cluster-expansion.mapper";
+import {
+  createNeuralCoreAggregatedPulseField,
+  createNeuralCoreAggregatedRouteRenderField,
+  updateNeuralCoreAggregatedPulseField,
+  updateNeuralCoreAggregatedRouteRenderField,
+} from "../../visualization/cluster-grammar/neural-core-cluster-grammar-render.mapper";
+import type {
+  NeuralCoreClusterGrammarDensity,
+  NeuralCoreClusterGrammarFocus,
+} from "../../visualization/cluster-grammar/neural-core-cluster-grammar.types";
+import {
+  NeuralCoreClusterTerritoriesView,
+} from "../neural-core-cluster-territories/neural-core-cluster-territories-view.component";
+import {
+  NeuralCoreAggregatedRoutesView,
+} from "../neural-core-aggregated-routes/neural-core-aggregated-routes-view.component";
+import {
+  createNeuralCoreSemanticFocusLensRuntime,
+  writeNeuralCoreSemanticFocusLensTarget,
+} from "../../visualization/focus-lens/neural-core-semantic-focus-lens.mapper";
+import {
+  updateNeuralCoreSemanticFocusLensRuntime,
+} from "../../visualization/focus-lens/neural-core-semantic-focus-lens.utils";
+import type {
+  WriteNeuralCoreSemanticFocusLensTargetParams,
+} from "../../visualization/focus-lens/neural-core-semantic-focus-lens.types";
+
+const EMPTY_NEURAL_CORE_CLUSTER_IDS: readonly string[] = [];
 
 interface NeuralCoreSceneMotionRuntime {
   particleTime: number;
@@ -191,6 +228,7 @@ const animatePulseGroup = (
   nodeField: NeuralCoreSemanticNodeField,
   maximumFragmentationDistance: number,
   decayThresholdSpread: number,
+  grammarOpacityByGraphIndex?: Float32Array,
 ): void => {
   for (const child of group.children) {
     const phase = child.userData.phase;
@@ -270,7 +308,11 @@ const animatePulseGroup = (
         (baseGreen + (semanticGreen - baseGreen) * colorInfluence) * brightness,
         (baseBlue + (semanticBlue - baseBlue) * colorInfluence) * brightness,
       );
-      material.opacity = baseOpacity * semanticOpacity * (1 - opacityDecay * 0.96);
+      const grammarOpacity = grammarOpacityByGraphIndex && nodeIndex >= 0
+        ? grammarOpacityByGraphIndex[nodeIndex]
+        : 1;
+      material.opacity = baseOpacity * semanticOpacity
+        * (1 - opacityDecay * 0.96) * grammarOpacity;
     }
   }
 };
@@ -428,6 +470,51 @@ const updateDecorativeGroupOpacity = (
   }
 };
 
+const updateClusterTerritoryVisuals = (
+  territoryRefs: readonly RefObject<Group | null>[],
+  clusterStates: readonly {
+    territoryOpacity: number;
+    territoryScale: number;
+    boundaryOpacity: number;
+    hubOpacity: number;
+    hubScale: number;
+    activityIntensity: number;
+  }[],
+  elapsedSeconds: number,
+): void => {
+  territoryRefs.forEach((territoryRef, index): void => {
+    const group = territoryRef.current;
+    const state = clusterStates[index];
+    if (!group || !state) {
+      return;
+    }
+    group.scale.setScalar(state.territoryScale);
+    const boundary = group.children[0] as Mesh | undefined;
+    const boundaryMaterial = boundary?.material as ShaderMaterial | undefined;
+    if (boundaryMaterial?.uniforms.uOpacity) {
+      boundaryMaterial.uniforms.uOpacity.value = state.boundaryOpacity
+        * state.territoryOpacity;
+    }
+    const hub = group.children[1] as Group | undefined;
+    if (!hub) {
+      return;
+    }
+    const pulse = 1 + Math.sin(elapsedSeconds * (0.72 + state.activityIntensity * 0.5) + index)
+      * 0.025 * state.activityIntensity;
+    hub.scale.setScalar(state.hubScale * pulse);
+    hub.rotation.z = elapsedSeconds * 0.08 * (0.4 + state.activityIntensity);
+    for (const child of hub.children) {
+      const mesh = child as Mesh;
+      const material = mesh.material as MeshBasicMaterial;
+      const role = material.userData.role;
+      const roleOpacity = role === "hub-ring"
+        ? 0.34
+        : role === "hub-filaments" ? 0.2 : 0.82;
+      material.opacity = state.hubOpacity * state.territoryOpacity * roleOpacity;
+    }
+  });
+};
+
 const getPropagationActivity = (visualState: NeuralCorePropagationVisualState): number => {
   let maximumActivity = 0;
   for (const activation of visualState.clusterActivations) {
@@ -442,6 +529,8 @@ const getPropagationActivity = (visualState: NeuralCorePropagationVisualState): 
 
 export const NeuralCoreScene = ({
   clusterLabelConfig,
+  clusterGrammarConfig,
+  semanticFocusLensConfig,
   choreography,
   lodConfig,
   narrative,
@@ -472,6 +561,14 @@ export const NeuralCoreScene = ({
   const clusterActivationPositionRef = useRef<BufferAttribute | null>(null);
   const clusterActivationOpacityRef = useRef<BufferAttribute | null>(null);
   const clusterActivationSizeRef = useRef<BufferAttribute | null>(null);
+  const aggregatedPulseColorRef = useRef<BufferAttribute | null>(null);
+  const aggregatedPulseGeometryRef = useRef<BufferGeometry | null>(null);
+  const aggregatedPulseOpacityRef = useRef<BufferAttribute | null>(null);
+  const aggregatedPulsePositionRef = useRef<BufferAttribute | null>(null);
+  const aggregatedPulseSizeRef = useRef<BufferAttribute | null>(null);
+  const aggregatedRouteOpacityRef = useRef<BufferAttribute | null>(null);
+  const aggregatedRouteThicknessRef = useRef<BufferAttribute | null>(null);
+  const clusterGrammarRibbonOpacityRef = useRef<BufferAttribute | null>(null);
   const connectionRef = useRef<Group | null>(null);
   const coreRef = useRef<Group | null>(null);
   const focusHaloMaterialRef = useRef<MeshBasicMaterial | null>(null);
@@ -556,6 +653,28 @@ export const NeuralCoreScene = ({
     globalGlow: "1.000",
     microFocus: "0.000",
   });
+  const clusterGrammarFocusRef = useRef<NeuralCoreClusterGrammarFocus>({
+    relatedClusterIds: [],
+    narrativeClusterIds: [],
+    narrativeSynapseIds: [],
+    narrativePathwayIds: [],
+  });
+  const clusterGrammarDensityRef = useRef<NeuralCoreClusterGrammarDensity>({
+    macroWeight: 1,
+    mesoWeight: 0,
+    microWeight: 0,
+  });
+  const focusLensParamsRef = useRef<WriteNeuralCoreSemanticFocusLensTargetParams>({
+    interactionMode: "presentation",
+    cameraDistanceToBrain: 4.35,
+    densityWeights: clusterGrammarDensityRef.current,
+  });
+  const focusLensRuntime = useMemo(() => {
+    return createNeuralCoreSemanticFocusLensRuntime(semanticFocusLensConfig);
+  }, [semanticFocusLensConfig]);
+  const focusLensTarget = useMemo(() => {
+    return createNeuralCoreSemanticFocusLensRuntime(semanticFocusLensConfig);
+  }, [semanticFocusLensConfig]);
   const haloTargetColor = useMemo(() => new Color("#82efff"), []);
   const graph = useMemo(() => createNeuralCoreGraph(), []);
   const propagation = useNeuralCorePropagation({
@@ -596,6 +715,20 @@ export const NeuralCoreScene = ({
       spatialMap: resolvedSpatialMap,
     });
   }, [graph, propagation.plan, resolvedSpatialMap, semanticVisualizationConfig.topology]);
+  const clusterGrammar = useMemo(() => {
+    return mapNeuralCoreClusterGrammar({
+      config: clusterGrammarConfig,
+      graph,
+      topology: spatialTopology,
+      topologyVisualState,
+    });
+  }, [clusterGrammarConfig, graph, spatialTopology, topologyVisualState]);
+  const clusterGrammarRuntime = useMemo(() => {
+    return createNeuralCoreClusterGrammarRuntime(clusterGrammar, clusterGrammarConfig);
+  }, [clusterGrammar, clusterGrammarConfig]);
+  const clusterTerritoryRefs = useMemo(() => {
+    return clusterGrammar.territories.map(() => createRef<Group>());
+  }, [clusterGrammar.territories]);
   const networkFogDepth = useMemo(() => {
     let maximumDepth = 1.8;
     for (const region of topologyVisualState.clusterRegions) {
@@ -688,6 +821,26 @@ export const NeuralCoreScene = ({
       semanticBufferStateRef.current,
     );
   }, [graph, propagation.plan, semanticBufferDimensionsKey, topologyVisualState]);
+  const clusterGrammarBuffers = useMemo(() => {
+    return createNeuralCoreClusterGrammarBufferState(
+      graph,
+      semanticBuffers,
+      clusterGrammar,
+      clusterGrammarConfig,
+    );
+  }, [clusterGrammar, clusterGrammarConfig, graph, semanticBuffers]);
+  const clusterGrammarNodeOpacityRefs = useMemo(() => {
+    return graph.nodeClouds.map(() => createRef<BufferAttribute>());
+  }, [graph.nodeClouds]);
+  const clusterGrammarConnectionOpacityRefs = useMemo(() => {
+    return graph.connectionBuffers.map(() => createRef<BufferAttribute>());
+  }, [graph.connectionBuffers]);
+  const aggregatedRouteField = useMemo(() => {
+    return createNeuralCoreAggregatedRouteRenderField(clusterGrammar);
+  }, [clusterGrammar]);
+  const aggregatedPulseField = useMemo(() => {
+    return createNeuralCoreAggregatedPulseField(clusterGrammar);
+  }, [clusterGrammar]);
   useEffect(() => {
     semanticBufferStateRef.current = semanticBuffers;
   }, [semanticBuffers]);
@@ -1005,6 +1158,103 @@ export const NeuralCoreScene = ({
       visualDensity.mesoWeight,
       visualDensity.microWeight,
     );
+    const networkMatrix = networkForDensity?.matrixWorld.elements;
+    const cameraDistanceToBrain = networkMatrix
+      ? Math.hypot(
+        camera.position.x - networkMatrix[12],
+        camera.position.y - networkMatrix[13],
+        camera.position.z - networkMatrix[14],
+      )
+      : relevantCameraDistance;
+    const grammarDensity = clusterGrammarDensityRef.current;
+    grammarDensity.macroWeight = visualDensity.macroWeight;
+    grammarDensity.mesoWeight = visualDensity.mesoWeight;
+    grammarDensity.microWeight = visualDensity.microWeight;
+    const focusLensParams = focusLensParamsRef.current;
+    focusLensParams.interactionMode = inspectionState.mode;
+    focusLensParams.selectedClusterId = inspectionFocus.selectedClusterId;
+    focusLensParams.cameraDistanceToSelected = inspectionFocus.selectedClusterId
+      ? relevantCameraDistance
+      : undefined;
+    focusLensParams.cameraDistanceToBrain = cameraDistanceToBrain;
+    writeNeuralCoreSemanticFocusLensTarget(
+      focusLensTarget,
+      focusLensParams,
+      semanticFocusLensConfig,
+    );
+    updateNeuralCoreSemanticFocusLensRuntime(
+      focusLensRuntime,
+      focusLensTarget,
+      semanticFocusLensConfig,
+      safeDeltaSeconds,
+    );
+    if (clusterGrammar.enabled) {
+      const grammarFocus = clusterGrammarFocusRef.current;
+      grammarFocus.selectedClusterId = focusLensRuntime.enabled
+        ? focusLensRuntime.selectedClusterId
+        : inspectionFocus.selectedClusterId;
+      grammarFocus.relatedClusterIds = focusLensRuntime.enabled
+        && focusLensRuntime.selectedClusterId === undefined
+        ? EMPTY_NEURAL_CORE_CLUSTER_IDS
+        : inspectionFocus.relatedClusterIds;
+      grammarFocus.narrativeClusterIds = narrativeState.clusterIds;
+      grammarFocus.narrativeSynapseIds = narrativeState.synapseIds;
+      grammarFocus.narrativePathwayIds = narrativeState.pathwayIds;
+      grammarFocus.protagonistClusterId = narrativeState.clusterIds[0]
+        ?? (
+          effectiveDirectionState.focusTargetType === "cluster"
+            ? effectiveDirectionState.focusTargetId
+            : undefined
+        );
+      updateNeuralCoreClusterGrammarRuntime(
+        clusterGrammarRuntime,
+        clusterGrammar,
+        clusterGrammarConfig,
+        grammarFocus,
+        grammarDensity,
+        propagationVisualState,
+        focusLensRuntime,
+        semanticFocusLensConfig,
+        safeDeltaSeconds,
+      );
+      updateNeuralCoreClusterGrammarBuffers(
+        clusterGrammarBuffers,
+        graph,
+        clusterGrammarRuntime,
+        grammarDensity,
+        focusLensRuntime,
+        semanticFocusLensConfig,
+      );
+      updateNeuralCoreAggregatedRouteRenderField(
+        aggregatedRouteField,
+        clusterGrammarRuntime,
+      );
+      const aggregatedPulsePointCount = updateNeuralCoreAggregatedPulseField(
+        aggregatedPulseField,
+        clusterGrammar,
+        clusterGrammarRuntime,
+        elapsedTime,
+      );
+      aggregatedPulseGeometryRef.current?.setDrawRange(0, aggregatedPulsePointCount);
+      markAttributeForUpdate(aggregatedRouteOpacityRef.current);
+      markAttributeForUpdate(aggregatedRouteThicknessRef.current);
+      markAttributeForUpdate(aggregatedPulsePositionRef.current);
+      markAttributeForUpdate(aggregatedPulseColorRef.current);
+      markAttributeForUpdate(aggregatedPulseOpacityRef.current);
+      markAttributeForUpdate(aggregatedPulseSizeRef.current);
+      for (const attributeRef of clusterGrammarNodeOpacityRefs) {
+        markAttributeForUpdate(attributeRef.current);
+      }
+      for (const attributeRef of clusterGrammarConnectionOpacityRefs) {
+        markAttributeForUpdate(attributeRef.current);
+      }
+      markAttributeForUpdate(clusterGrammarRibbonOpacityRef.current);
+      updateClusterTerritoryVisuals(
+        clusterTerritoryRefs,
+        clusterGrammarRuntime.clusterStates,
+        elapsedTime,
+      );
+    }
     const inspectionRoot = inspectionRootRef.current;
     if (inspectionRoot) {
       const cssValues = inspectionCssValuesRef.current;
@@ -1026,8 +1276,48 @@ export const NeuralCoreScene = ({
         cameraProfile,
         inspectionVisibility,
       );
-      const nextBase = decorativeComposition.opacity.toFixed(3);
-      const nextGlobalGlow = decorativeComposition.opacity.toFixed(3);
+      const directionContextAmount = sceneDirectionConfig.focus.maximumContextDim > 0
+        ? Math.min(
+          1,
+          Math.max(
+            0,
+            effectiveDirectionState.contextDim
+              / sceneDirectionConfig.focus.maximumContextDim,
+          ),
+        )
+        : 0;
+      const directionFocusAmount = effectiveDirectionState.isOverview
+        ? 0
+        : Math.max(directionContextAmount, effectiveDirectionState.transitionProgress);
+      const narrativeFocusAmount = narrativeState.isActive
+        ? Math.max(0.48, Math.min(1, narrativeState.contextDim))
+        : 0;
+      const inspectionFocusAmount = inspectionVisibility.hasSelection
+        ? 0.68 + inspectionVisibility.microWeight * 0.32
+        : 0;
+      const neuralFocusAmount = Math.max(
+        directionFocusAmount,
+        narrativeFocusAmount,
+        inspectionFocusAmount,
+      );
+      const baseVisibility = Math.max(
+        0.42,
+        Math.min(
+          decorativeComposition.opacity,
+          inspectionVisibility.enabled ? inspectionVisibility.baseWeight : 1,
+          1 - neuralFocusAmount * 0.28,
+        ),
+      );
+      const globalGlowVisibility = Math.max(
+        0.38,
+        Math.min(
+          decorativeComposition.opacity,
+          inspectionVisibility.enabled ? inspectionVisibility.globalGlowWeight : 1,
+          1 - neuralFocusAmount * 0.58,
+        ),
+      );
+      const nextBase = baseVisibility.toFixed(3);
+      const nextGlobalGlow = globalGlowVisibility.toFixed(3);
       if (cssValues.microFocus !== nextMicroFocus) {
         cssValues.microFocus = nextMicroFocus;
         inspectionRoot.style.setProperty("--neural-core-micro-focus", nextMicroFocus);
@@ -1084,6 +1374,22 @@ export const NeuralCoreScene = ({
       cameraProfile,
       inspectionVisibility,
     );
+    if (clusterGrammar.enabled) {
+      const detailedPulseWeight = focusLensRuntime.enabled
+        ? focusLensRuntime.realActivityWeight
+        : inspectionFocus.selectedClusterId
+          ? inspectionVisibility.mesoWeight * 0.42 + inspectionVisibility.microWeight
+          : 0.035;
+      for (let index = 0; index < pulsePointCount; index += 1) {
+        propagationBuffers.pulseField.opacities[index] *= detailedPulseWeight;
+      }
+      if (focusLensRuntime.enabled) {
+        for (let index = 0; index < clusterPointCount; index += 1) {
+          propagationBuffers.clusterField.opacities[index] *=
+            focusLensRuntime.aggregatedActivityWeight;
+        }
+      }
+    }
     propagationPulseGeometryRef.current?.setDrawRange(0, pulsePointCount);
     clusterActivationGeometryRef.current?.setDrawRange(0, clusterPointCount);
     markAttributeForUpdate(propagationPulsePositionRef.current);
@@ -1131,6 +1437,10 @@ export const NeuralCoreScene = ({
       semanticRibbonMaterialRef.current.uniforms.uTime.value = elapsedTime;
       semanticRibbonMaterialRef.current.uniforms.uResolution.value.x = size.width;
       semanticRibbonMaterialRef.current.uniforms.uResolution.value.y = size.height;
+      semanticRibbonMaterialRef.current.uniforms.uFocusLensThickness.value =
+        clusterGrammar.enabled && focusLensRuntime.enabled
+          ? focusLensRuntime.detailedSynapseThickness
+          : 1;
     }
     if (nodeCloudRef.current) {
       const maximumNodeScreenSize = inspectionVisibility.enabled
@@ -1359,6 +1669,8 @@ export const NeuralCoreScene = ({
       narrativeState,
       network: networkRef.current,
       viewport: { width: size.width, height: size.height },
+      clusterGrammarEnabled: clusterGrammar.enabled,
+      clusterGrammarVisibleTerritoryIds: clusterGrammarRuntime.visibleTerritoryIds,
     });
 
     const focusRegion = effectiveDirectionState.focusTargetType === "cluster"
@@ -1424,7 +1736,10 @@ export const NeuralCoreScene = ({
       const focusIndicatorVisible = narrativeConfig.focusIndicator.enabled
         && narrativeConfig.focusIndicator.mode !== "hidden";
       const inspectionEnvelopeActive = inspectionVisibility.enabled
-        && inspectionConfig.visualDensity.selectedClusterEnvelope.enabled;
+        && (
+          clusterGrammar.enabled
+          || inspectionConfig.visualDensity.selectedClusterEnvelope.enabled
+        );
       const targetHaloOpacity = focusRegion && focusIndicatorVisible && !inspectionEnvelopeActive
         ? Math.min(
           narrativeConfig.focusIndicator.maximumOpacity,
@@ -1451,6 +1766,7 @@ export const NeuralCoreScene = ({
         ? topologyVisualState.lookups.clusterRegionById[inspectionFocus.selectedClusterId]
         : undefined;
       const envelopeActive = inspectionVisibility.enabled
+        && !clusterGrammar.enabled
         && envelopeConfig.enabled
         && selectedRegion !== undefined;
       if (selectedRegion && networkRef.current) {
@@ -1567,9 +1883,16 @@ export const NeuralCoreScene = ({
       cameraProfile,
       inspectionVisibility,
     );
+    const semanticLensActive = clusterGrammar.enabled && focusLensRuntime.enabled;
+    const ambientCompositionOpacity = semanticLensActive
+      ? Math.max(
+        ambientComposition.opacity,
+        focusLensRuntime.brainContext.ambientOpacity,
+      )
+      : ambientComposition.opacity;
     if (particleMaterialRef.current) {
       const opacityUniform = particleMaterialRef.current.uniforms.uOpacity;
-      const ambientOpacity = graph.particleField.opacity * ambientComposition.opacity;
+      const ambientOpacity = graph.particleField.opacity * ambientCompositionOpacity;
       opacityUniform.value = dampNeuralCoreSceneDirectionValue(
         Number(opacityUniform.value),
         ambientOpacity,
@@ -1579,7 +1902,7 @@ export const NeuralCoreScene = ({
     }
     if (ambientPulseMaterialRef.current) {
       const opacityUniform = ambientPulseMaterialRef.current.uniforms.uOpacity;
-      const ambientPulseOpacity = graph.pulseField.opacity * ambientComposition.opacity;
+      const ambientPulseOpacity = graph.pulseField.opacity * ambientCompositionOpacity;
       opacityUniform.value = dampNeuralCoreSceneDirectionValue(
         Number(opacityUniform.value),
         ambientPulseOpacity,
@@ -1603,15 +1926,21 @@ export const NeuralCoreScene = ({
       cameraProfile,
       inspectionVisibility,
     );
+    const decorativeOpacity = semanticLensActive
+      ? Math.max(
+        decorativeComposition.opacity,
+        0.26 + focusLensRuntime.brainShellWeight * 0.12,
+      )
+      : decorativeComposition.opacity;
     updateDecorativeGroupOpacity(
       ringRef.current,
-      decorativeComposition.opacity,
+      decorativeOpacity,
       semanticVisualizationConfig.transition.releaseResponse,
       safeDeltaSeconds,
     );
     updateDecorativeGroupOpacity(
       baseRef.current,
-      decorativeComposition.opacity,
+      decorativeOpacity,
       semanticVisualizationConfig.transition.releaseResponse,
       safeDeltaSeconds,
     );
@@ -1637,6 +1966,9 @@ export const NeuralCoreScene = ({
         semanticBuffers.nodeField,
         semanticVisualizationConfig.failure.maximumNodeFragmentationDistance,
         semanticVisualizationConfig.failure.nodeDecayThresholdSpread,
+        clusterGrammar.enabled
+          ? clusterGrammarBuffers.nodeOpacitiesByGraphIndex
+          : undefined,
       );
     }
 
@@ -1650,6 +1982,9 @@ export const NeuralCoreScene = ({
         semanticBuffers.nodeField,
         semanticVisualizationConfig.failure.maximumNodeFragmentationDistance,
         semanticVisualizationConfig.failure.nodeDecayThresholdSpread,
+        clusterGrammar.enabled
+          ? clusterGrammarBuffers.nodeOpacitiesByGraphIndex
+          : undefined,
       );
     }
 
@@ -1795,6 +2130,30 @@ export const NeuralCoreScene = ({
       semanticRibbonField={semanticBuffers.ribbonField}
       semanticRibbonMaterialRef={semanticRibbonMaterialRef}
       semanticVisualizationConfig={semanticVisualizationConfig}
+      clusterGrammarBufferState={clusterGrammarBuffers}
+      clusterGrammarConnectionOpacityRefs={clusterGrammarConnectionOpacityRefs}
+      clusterGrammarNodeOpacityRefs={clusterGrammarNodeOpacityRefs}
+      clusterGrammarRibbonOpacityRef={clusterGrammarRibbonOpacityRef}
+      clusterGrammarVisuals={clusterGrammar.enabled ? (
+        <>
+          <NeuralCoreClusterTerritoriesView
+            focusLensConfig={semanticFocusLensConfig}
+            grammar={clusterGrammar}
+            territoryRefs={clusterTerritoryRefs}
+          />
+          <NeuralCoreAggregatedRoutesView
+            pulseColorRef={aggregatedPulseColorRef}
+            pulseField={aggregatedPulseField}
+            pulseGeometryRef={aggregatedPulseGeometryRef}
+            pulseOpacityRef={aggregatedPulseOpacityRef}
+            pulsePositionRef={aggregatedPulsePositionRef}
+            pulseSizeRef={aggregatedPulseSizeRef}
+            routeField={aggregatedRouteField}
+            routeOpacityRef={aggregatedRouteOpacityRef}
+            routeThicknessRef={aggregatedRouteThicknessRef}
+          />
+        </>
+      ) : undefined}
       stableFunctionalBlending={
         inspectionState.mode === "inspection"
           && inspectionConfig.cameraRendering.enabled

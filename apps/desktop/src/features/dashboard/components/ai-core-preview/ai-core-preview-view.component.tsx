@@ -44,6 +44,8 @@ export const AiCorePreviewView = ({
   semanticVisualizationConfig,
   clusterLabelConfig,
   lodConfig,
+  clusterGrammarConfig,
+  semanticFocusLensConfig,
   spatialMap,
   spatialLayoutConfig,
   onPropagationEvent,
@@ -87,6 +89,8 @@ export const AiCorePreviewView = ({
           semanticVisualizationConfig={semanticVisualizationConfig}
           clusterLabelConfig={clusterLabelConfig}
           lodConfig={lodConfig}
+          clusterGrammarConfig={clusterGrammarConfig}
+          semanticFocusLensConfig={semanticFocusLensConfig}
           spatialMap={spatialMap}
           spatialLayoutConfig={spatialLayoutConfig}
           onPropagationEvent={onPropagationEvent}

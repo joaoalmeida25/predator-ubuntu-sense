@@ -15,6 +15,7 @@ export interface NeuralCoreContextPanelMetricModel {
 }
 
 export interface NeuralCoreContextPanelModel {
+  aggregatedConnectionCount?: number;
   activityLabel?: string;
   description?: string;
   impact?: {
@@ -24,6 +25,8 @@ export interface NeuralCoreContextPanelModel {
   };
   metrics: readonly NeuralCoreContextPanelMetricModel[];
   name: string;
+  incomingRoutes: readonly string[];
+  outgoingRoutes: readonly string[];
   pathways: readonly string[];
   relatedClusters: readonly string[];
   status: NeuralCoreTopologyStatus;

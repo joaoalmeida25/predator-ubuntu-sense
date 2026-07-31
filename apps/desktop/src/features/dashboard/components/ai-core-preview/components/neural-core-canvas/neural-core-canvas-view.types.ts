@@ -27,6 +27,12 @@ import type {
   NeuralCoreInspectionState,
 } from "../../domain/inspection/neural-core-inspection.types";
 import type { NeuralCoreInspectionFocusState } from "../../visualization/inspection/neural-core-inspection-focus.types";
+import type {
+  NeuralCoreClusterGrammarConfig,
+} from "../../visualization/cluster-grammar/neural-core-cluster-grammar.types";
+import type {
+  NeuralCoreSemanticFocusLensConfig,
+} from "../../visualization/focus-lens/neural-core-semantic-focus-lens.types";
 
 export interface NeuralCoreCanvasViewProps {
   fallback: ReactNode;
@@ -42,6 +48,8 @@ export interface NeuralCoreCanvasViewProps {
   semanticVisualizationConfig: NeuralCoreSemanticVisualizationConfig;
   clusterLabelConfig: NeuralCoreClusterLabelConfig;
   lodConfig: NeuralCoreLodConfig;
+  clusterGrammarConfig: NeuralCoreClusterGrammarConfig;
+  semanticFocusLensConfig: NeuralCoreSemanticFocusLensConfig;
   spatialMap?: NeuralCoreSpatialMapInput;
   spatialLayoutConfig: NeuralCoreSpatialLayoutConfig;
   topology?: NeuralCoreTopology;

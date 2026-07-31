@@ -21,6 +21,7 @@ import { NeuralCoreContextPanelView } from "./neural-core-context-panel-view.com
 import type { NeuralCoreContextPanelModel } from "./neural-core-context-panel-view.types";
 
 export interface NeuralCoreContextPanelProps {
+  clusterGrammarEnabled?: boolean;
   config: NeuralCoreInspectionConfig["panel"];
   focus: NeuralCoreInspectionFocusState;
   onClose: () => void;
@@ -29,6 +30,7 @@ export interface NeuralCoreContextPanelProps {
 
 const NeuralCoreContextPanelComponent = ({
   config,
+  clusterGrammarEnabled = false,
   focus,
   onClose,
   topology,
@@ -73,8 +75,56 @@ const NeuralCoreContextPanelComponent = ({
       .map((clusterId) => clusterNameById.get(clusterId)),
     ...(semanticContext?.impact?.affectedPathwayIds ?? []).map(pathwayLabel),
   ].filter((value): value is string => Boolean(value));
+  const aggregatedRouteById = new Map<string, {
+    sourceClusterId: string;
+    targetClusterId: string;
+  }>();
+  for (const synapse of topology.synapses) {
+    if (!clusterGrammarEnabled) {
+      break;
+    }
+    if (
+      synapse.fromClusterId !== cluster.id
+      && synapse.toClusterId !== cluster.id
+    ) {
+      continue;
+    }
+    const direction = synapse.direction
+      ?? (synapse.kind === "bidirectional" ? "bidirectional" : "forward");
+    const routeId = [
+      synapse.fromClusterId,
+      synapse.toClusterId,
+      direction,
+      synapse.kind,
+    ].join(":");
+    aggregatedRouteById.set(routeId, {
+      sourceClusterId: synapse.fromClusterId,
+      targetClusterId: synapse.toClusterId,
+    });
+  }
+  const incomingRoutes: string[] = [];
+  const outgoingRoutes: string[] = [];
+  for (const route of aggregatedRouteById.values()) {
+    const source = clusterNameById.get(route.sourceClusterId);
+    const target = clusterNameById.get(route.targetClusterId);
+    if (!source || !target) {
+      continue;
+    }
+    const label = `${source} → ${target}`;
+    if (route.targetClusterId === cluster.id) {
+      incomingRoutes.push(label);
+    }
+    if (route.sourceClusterId === cluster.id) {
+      outgoingRoutes.push(label);
+    }
+  }
   const model: NeuralCoreContextPanelModel = {
+    ...(clusterGrammarEnabled
+      ? { aggregatedConnectionCount: aggregatedRouteById.size }
+      : {}),
     name: getNeuralCoreClusterDisplayName(cluster),
+    incomingRoutes,
+    outgoingRoutes,
     typeLabel: formatNeuralCoreClusterKind(cluster.kind),
     status: cluster.status ?? topology.status ?? "idle",
     statusLabel: formatNeuralCoreTopologyStatus(cluster.status ?? topology.status ?? "idle"),

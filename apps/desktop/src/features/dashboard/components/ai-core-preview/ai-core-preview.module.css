@@ -27,15 +27,15 @@
   filter: opacity(calc(1 - var(--neural-core-micro-focus) * 0.28));
 }
 
-.corePanel[data-selection-active="true"] .inspectionGlobalGlow {
+.inspectionGlobalGlow {
   filter: opacity(var(--neural-core-global-glow-visibility));
 }
 
-.corePanel[data-selection-active="true"] .energyColumn.inspectionGlobalGlow {
+.energyColumn.inspectionGlobalGlow {
   filter: blur(8px) opacity(var(--neural-core-global-glow-visibility));
 }
 
-.corePanel[data-selection-active="true"] .inspectionBaseDecoration {
+.inspectionBaseDecoration {
   filter: opacity(var(--neural-core-base-visibility));
 }
 

@@ -52,6 +52,13 @@ import type {
   NeuralCoreInspectionState,
 } from "../../domain/inspection/neural-core-inspection.types";
 import type { NeuralCoreInspectionFocusState } from "../../visualization/inspection/neural-core-inspection-focus.types";
+import type {
+  NeuralCoreClusterGrammarBufferState,
+  NeuralCoreClusterGrammarConfig,
+} from "../../visualization/cluster-grammar/neural-core-cluster-grammar.types";
+import type {
+  NeuralCoreSemanticFocusLensConfig,
+} from "../../visualization/focus-lens/neural-core-semantic-focus-lens.types";
 
 export interface NeuralCoreSceneProps {
   choreography?: NeuralCoreChoreography;
@@ -66,6 +73,8 @@ export interface NeuralCoreSceneProps {
   semanticVisualizationConfig: NeuralCoreSemanticVisualizationConfig;
   clusterLabelConfig: NeuralCoreClusterLabelConfig;
   lodConfig: NeuralCoreLodConfig;
+  clusterGrammarConfig: NeuralCoreClusterGrammarConfig;
+  semanticFocusLensConfig: NeuralCoreSemanticFocusLensConfig;
   spatialMap?: NeuralCoreSpatialMapInput;
   spatialLayoutConfig: NeuralCoreSpatialLayoutConfig;
   topology?: NeuralCoreTopology;
@@ -133,4 +142,9 @@ export interface NeuralCoreSceneViewProps {
   semanticRibbonMaterialRef: RefObject<ShaderMaterial | null>;
   semanticVisualizationConfig: NeuralCoreSemanticVisualizationConfig;
   stableFunctionalBlending: boolean;
+  clusterGrammarBufferState: NeuralCoreClusterGrammarBufferState;
+  clusterGrammarConnectionOpacityRefs: readonly RefObject<BufferAttribute | null>[];
+  clusterGrammarNodeOpacityRefs: readonly RefObject<BufferAttribute | null>[];
+  clusterGrammarRibbonOpacityRef: RefObject<BufferAttribute | null>;
+  clusterGrammarVisuals?: ReactNode;
 }

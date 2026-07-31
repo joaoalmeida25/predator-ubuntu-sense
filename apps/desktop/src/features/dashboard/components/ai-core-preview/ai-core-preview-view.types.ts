@@ -47,6 +47,14 @@ import type {
   NeuralCoreInteractionMode,
 } from "./domain/inspection/neural-core-inspection.types";
 import type { NeuralCoreInspectionFocusState } from "./visualization/inspection/neural-core-inspection-focus.types";
+import type {
+  NeuralCoreClusterGrammarConfig,
+  NeuralCoreClusterGrammarConfigInput,
+} from "./visualization/cluster-grammar/neural-core-cluster-grammar.types";
+import type {
+  NeuralCoreSemanticFocusLensConfig,
+  NeuralCoreSemanticFocusLensConfigInput,
+} from "./visualization/focus-lens/neural-core-semantic-focus-lens.types";
 
 export interface AiCorePreviewProps {
   dataFlow: string;
@@ -71,6 +79,8 @@ export interface AiCorePreviewProps {
   showClusterLabels?: boolean;
   clusterLabelConfig?: NeuralCoreClusterLabelConfigInput;
   lodConfig?: NeuralCoreLodConfigInput;
+  clusterGrammarConfig?: NeuralCoreClusterGrammarConfigInput;
+  semanticFocusLensConfig?: NeuralCoreSemanticFocusLensConfigInput;
   demoScenario?: NeuralCoreDemoScenario;
   defaultDemoScenario?: NeuralCoreDemoScenario;
   showDemoControls?: boolean;
@@ -140,6 +150,8 @@ export interface AiCorePreviewViewProps {
   semanticVisualizationConfig: NeuralCoreSemanticVisualizationConfig;
   clusterLabelConfig: NeuralCoreClusterLabelConfig;
   lodConfig: NeuralCoreLodConfig;
+  clusterGrammarConfig: NeuralCoreClusterGrammarConfig;
+  semanticFocusLensConfig: NeuralCoreSemanticFocusLensConfig;
   spatialMap?: NeuralCoreSpatialMapInput;
   spatialLayoutConfig: NeuralCoreSpatialLayoutConfig;
   topology?: NeuralCoreTopology;
