@@ -21,6 +21,7 @@ import type {
   NeuralCorePropagationEvent,
 } from "../../domain/propagation/neural-core-propagation.types";
 import type {
+  NeuralCoreOperationalProtagonistMarkerField,
   NeuralCorePropagationPointField,
 } from "../../visualization/propagation/neural-core-propagation-buffer.types";
 import type { NeuralCoreTopology } from "../../domain/topology/neural-core-topology.types";
@@ -59,6 +60,16 @@ import type {
 import type {
   NeuralCoreSemanticFocusLensConfig,
 } from "../../visualization/focus-lens/neural-core-semantic-focus-lens.types";
+import type {
+  NeuralCoreOperationalRuntimeStatus,
+  NeuralCoreOperationalRuntimeValueRef,
+} from "../../demos/operational/runtime/neural-core-operational-runtime.types";
+import type {
+  NeuralCoreOperationalRouteVisualRequest,
+} from "../../demos/operational/mappers/neural-core-operational-propagation.mapper";
+import type {
+  NeuralCoreOperationalVisualOverlay,
+} from "../../demos/operational/mappers/neural-core-operational-visual-state.mapper";
 
 export interface NeuralCoreSceneProps {
   choreography?: NeuralCoreChoreography;
@@ -79,6 +90,12 @@ export interface NeuralCoreSceneProps {
   spatialLayoutConfig: NeuralCoreSpatialLayoutConfig;
   topology?: NeuralCoreTopology;
   runtimeScenarioKey: string;
+  runtimePlaybackStatus?: NeuralCoreOperationalRuntimeStatus;
+  runtimePlaybackPaused?: boolean;
+  runtimeFocusedClusterId?: string;
+  operationalVisualOverlay?: NeuralCoreOperationalVisualOverlay;
+  operationalPropagationInput?: NeuralCoreOperationalRouteVisualRequest;
+  operationalRouteProgressRef?: NeuralCoreOperationalRuntimeValueRef;
   cameraResetRevision: number;
   inspectionConfig: NeuralCoreInspectionConfig;
   inspectionFocus: NeuralCoreInspectionFocusState;
@@ -124,6 +141,14 @@ export interface NeuralCoreSceneViewProps {
   propagationPulsePositionRef: RefObject<BufferAttribute | null>;
   propagationPulseOpacityRef: RefObject<BufferAttribute | null>;
   propagationPulseSizeRef: RefObject<BufferAttribute | null>;
+  operationalProtagonistMarkerColorRef: RefObject<BufferAttribute | null>;
+  operationalProtagonistMarkerField: NeuralCoreOperationalProtagonistMarkerField;
+  operationalProtagonistMarkerGeometryRef: RefObject<BufferGeometry | null>;
+  operationalProtagonistMarkerMaterialRef: RefObject<ShaderMaterial | null>;
+  operationalProtagonistMarkerOpacityRef: RefObject<BufferAttribute | null>;
+  operationalProtagonistMarkerPositionRef: RefObject<BufferAttribute | null>;
+  operationalProtagonistMarkerSizeRef: RefObject<BufferAttribute | null>;
+  operationalProtagonistMarkerTangentRef: RefObject<BufferAttribute | null>;
   propagationConfig: NeuralCorePropagationConfig;
   ringRef: RefObject<Group | null>;
   rings: NeuralCoreRing[];

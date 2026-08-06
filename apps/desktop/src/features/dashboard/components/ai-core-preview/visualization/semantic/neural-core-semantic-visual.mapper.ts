@@ -17,6 +17,9 @@ import type {
   NeuralCoreSynapseVisualActivation,
 } from "../propagation/neural-core-propagation-visual.types";
 import type { NeuralCoreTopologyVisualState } from "../topology/neural-core-topology-visual.types";
+import type {
+  NeuralCoreOperationalVisualOverlay,
+} from "../../demos/operational/mappers/neural-core-operational-visual-state.mapper";
 import {
   EMPTY_NEURAL_CORE_CLUSTER_SEMANTIC_EFFECTS,
   EMPTY_NEURAL_CORE_GLOBAL_SEMANTIC_EFFECTS,
@@ -38,6 +41,7 @@ export interface MapNeuralCoreSemanticVisualStateParams {
   propagationVisualState: NeuralCorePropagationVisualState;
   choreographyEvaluation?: NeuralCoreChoreographyEvaluation;
   config: NeuralCoreSemanticVisualizationConfig;
+  operationalOverlay?: NeuralCoreOperationalVisualOverlay;
 }
 
 export interface NeuralCoreSemanticVisualRuntime {
@@ -388,12 +392,19 @@ const updateClusterState = (
   clusterIndex: number,
   global: Partial<NeuralCoreGlobalSemanticEffects>,
   config: NeuralCoreSemanticVisualizationConfig,
+  operationalOverlay?: NeuralCoreOperationalVisualOverlay,
 ): void => {
   const cluster = runtime.topology.clusters[clusterIndex];
+  const operationalState = operationalOverlay?.clusterStateById[cluster.id];
+  const clusterStatus = operationalState?.status ?? cluster.status;
   const state = runtime.state.clusterEffects[clusterIndex];
   const propagation = runtime.clusterPropagationByIndex[clusterIndex];
   const effects = runtime.choreographyClusterEffects[clusterIndex];
-  const activity = mix(Math.max(cluster.activity ?? 0, propagation?.intensity ?? 0), effects.activity, global.activity);
+  const activity = mix(
+    Math.max(operationalState?.activity ?? cluster.activity ?? 0, propagation?.intensity ?? 0),
+    effects.activity,
+    global.activity,
+  );
   const cohesion = mix(cluster.stability, effects.cohesion, global.stability);
   const synchronization = mix(0, effects.synchronization, global.synchronization);
   const instability = mix(cluster.stability === undefined ? 0 : 1 - cluster.stability, effects.instability, global.instability);
@@ -402,10 +413,14 @@ const updateClusterState = (
   const nodeDecay = mix(0, effects.nodeDecay, global.nodeDecay);
   const density = mix(0, effects.density);
   const internalConnectivity = mix(0, effects.internalConnectivity);
-  const colorInfluence = mix(getStatusColorScore(cluster.status), effects.colorInfluence, global.colorInfluence);
-  const statusError = cluster.status === "error" ? colorInfluence : 0;
-  const statusWarning = cluster.status === "warning" ? colorInfluence : 0;
-  const statusSuccess = cluster.status === "success" ? colorInfluence : 0;
+  const colorInfluence = mix(
+    getStatusColorScore(clusterStatus),
+    effects.colorInfluence,
+    global.colorInfluence,
+  );
+  const statusError = clusterStatus === "error" ? colorInfluence : 0;
+  const statusWarning = clusterStatus === "warning" ? colorInfluence : 0;
+  const statusSuccess = clusterStatus === "success" ? colorInfluence : 0;
 
   state.activity = activity;
   state.density = density;
@@ -436,18 +451,21 @@ const updateSynapseState = (
   synapseIndex: number,
   global: Partial<NeuralCoreGlobalSemanticEffects>,
   config: NeuralCoreSemanticVisualizationConfig,
+  operationalOverlay?: NeuralCoreOperationalVisualOverlay,
 ): void => {
   const synapse = runtime.topology.synapses[synapseIndex];
+  const synapseStatus = operationalOverlay?.routeStatusById[synapse.id]
+    ?? synapse.status;
   const state = runtime.state.synapseEffects[synapseIndex];
   const propagation = runtime.synapsePropagationByIndex[synapseIndex];
   const effects = runtime.choreographySynapseEffects[synapseIndex];
   const activity = mix(propagation?.opacity, effects.activity, global.activity);
   const instability = mix(0, effects.instability, global.instability);
   const fragmentation = mix(0, effects.fragmentation, global.fragmentation);
-  const colorInfluence = mix(getStatusColorScore(synapse.status), effects.colorInfluence, global.colorInfluence);
-  const statusWarning = synapse.status === "warning" ? colorInfluence : 0;
-  const statusError = synapse.status === "error" ? colorInfluence : 0;
-  const statusSuccess = synapse.status === "success" ? colorInfluence : 0;
+  const colorInfluence = mix(getStatusColorScore(synapseStatus), effects.colorInfluence, global.colorInfluence);
+  const statusWarning = synapseStatus === "warning" ? colorInfluence : 0;
+  const statusError = synapseStatus === "error" ? colorInfluence : 0;
+  const statusSuccess = synapseStatus === "success" ? colorInfluence : 0;
   const color = selectSemanticColor(
     activity * colorInfluence * (1 - Math.max(statusWarning, statusError) * 0.72),
     Math.max(effects.thickness, effects.persistence) * colorInfluence * 1.14,
@@ -537,6 +555,7 @@ export const updateNeuralCoreSemanticVisualRuntime = (
   propagationVisualState: NeuralCorePropagationVisualState,
   choreographyEvaluation: NeuralCoreChoreographyEvaluation | undefined,
   config: NeuralCoreSemanticVisualizationConfig,
+  operationalOverlay?: NeuralCoreOperationalVisualOverlay,
 ): NeuralCoreSemanticVisualState => {
   if (!config.enabled || runtime.topology.clusters.length === 0) {
     return EMPTY_NEURAL_CORE_SEMANTIC_VISUAL_STATE;
@@ -546,10 +565,10 @@ export const updateNeuralCoreSemanticVisualRuntime = (
   const global = choreographyEvaluation?.globalEffects
     ?? EMPTY_NEURAL_CORE_GLOBAL_SEMANTIC_EFFECTS;
   for (let index = 0; index < runtime.topology.clusters.length; index += 1) {
-    updateClusterState(runtime, index, global, config);
+    updateClusterState(runtime, index, global, config, operationalOverlay);
   }
   for (let index = 0; index < runtime.topology.synapses.length; index += 1) {
-    updateSynapseState(runtime, index, global, config);
+    updateSynapseState(runtime, index, global, config, operationalOverlay);
   }
   const pathways = runtime.topology.pathways ?? [];
   for (let index = 0; index < pathways.length; index += 1) {
@@ -565,6 +584,7 @@ export const mapNeuralCoreSemanticVisualState = ({
   propagationVisualState,
   choreographyEvaluation,
   config,
+  operationalOverlay,
 }: MapNeuralCoreSemanticVisualStateParams): NeuralCoreSemanticVisualState => {
   if (!config.enabled || topology.clusters.length === 0) {
     return EMPTY_NEURAL_CORE_SEMANTIC_VISUAL_STATE;
@@ -579,5 +599,6 @@ export const mapNeuralCoreSemanticVisualState = ({
     propagationVisualState,
     choreographyEvaluation,
     config,
+    operationalOverlay,
   );
 };

@@ -11,6 +11,14 @@ import type { NeuralCoreInspectionConfig } from "../../domain/inspection/neural-
 import { getNeuralCoreClusterDisplayName } from "../../domain/semantic/neural-core-semantic-context.utils";
 import type { NeuralCoreTopology } from "../../domain/topology/neural-core-topology.types";
 import type { NeuralCoreInspectionFocusState } from "../../visualization/inspection/neural-core-inspection-focus.types";
+import type { NeuralCoreMetric } from "../../domain/semantic/neural-core-semantic-context.types";
+import type {
+  NeuralCoreOperationalClusterVisualState,
+} from "../../demos/operational/mappers/neural-core-operational-visual-state.mapper";
+import type {
+  NeuralCoreOperationalImpactRuntimeState,
+  NeuralCoreOperationalRetryRuntimeState,
+} from "../../demos/operational/runtime/neural-core-operational-runtime.types";
 import {
   formatNeuralCoreActivity,
   formatNeuralCoreClusterKind,
@@ -24,6 +32,11 @@ export interface NeuralCoreContextPanelProps {
   clusterGrammarEnabled?: boolean;
   config: NeuralCoreInspectionConfig["panel"];
   focus: NeuralCoreInspectionFocusState;
+  clusterVisualState?: NeuralCoreOperationalClusterVisualState;
+  metricOverrides?: readonly NeuralCoreMetric[];
+  operationalRouteId?: string;
+  operationalImpact?: NeuralCoreOperationalImpactRuntimeState;
+  operationalRetry?: NeuralCoreOperationalRetryRuntimeState;
   onClose: () => void;
   topology: NeuralCoreTopology;
 }
@@ -32,6 +45,11 @@ const NeuralCoreContextPanelComponent = ({
   config,
   clusterGrammarEnabled = false,
   focus,
+  clusterVisualState,
+  metricOverrides,
+  operationalRouteId,
+  operationalImpact,
+  operationalRetry,
   onClose,
   topology,
 }: NeuralCoreContextPanelProps): ReactElement | null => {
@@ -59,6 +77,7 @@ const NeuralCoreContextPanelComponent = ({
   ]));
   const pathwayById = new Map((topology.pathways ?? []).map((pathway) => [pathway.id, pathway]));
   const semanticContext = cluster.semanticContext;
+  const resolvedActivity = clusterVisualState?.activity ?? cluster.activity;
   const pathwayLabel = (pathwayId: string): string | undefined => {
     const pathway = pathwayById.get(pathwayId);
     if (!pathway) {
@@ -70,8 +89,18 @@ const NeuralCoreContextPanelComponent = ({
         .filter((value): value is string => value !== undefined)
         .join(" → ");
   };
+  const activeOperationalImpact = operationalImpact
+    && (
+      operationalImpact.sourceClusterId === cluster.id
+      || operationalImpact.affectedClusterIds.includes(cluster.id)
+    )
+    ? operationalImpact
+    : undefined;
   const affectedLabels = [
-    ...(semanticContext?.impact?.affectedClusterIds ?? [])
+    ...(activeOperationalImpact?.affectedClusterIds
+      ?? semanticContext?.impact?.affectedClusterIds
+      ?? [])
+      .filter((clusterId) => clusterId !== cluster.id)
       .map((clusterId) => clusterNameById.get(clusterId)),
     ...(semanticContext?.impact?.affectedPathwayIds ?? []).map(pathwayLabel),
   ].filter((value): value is string => Boolean(value));
@@ -118,7 +147,24 @@ const NeuralCoreContextPanelComponent = ({
       outgoingRoutes.push(label);
     }
   }
+  const operationalRoute = operationalRouteId
+    ? topology.synapses.find(({ id }) => id === operationalRouteId)
+    : undefined;
+  const operationalRouteTouchesCluster = operationalRoute
+    && (
+      operationalRoute.fromClusterId === cluster.id
+      || operationalRoute.toClusterId === cluster.id
+    );
+  const operationalRouteSourceName = operationalRouteTouchesCluster
+    ? clusterNameById.get(operationalRoute.fromClusterId)
+    : undefined;
+  const operationalRouteTargetName = operationalRouteTouchesCluster
+    ? clusterNameById.get(operationalRoute.toClusterId)
+    : undefined;
   const model: NeuralCoreContextPanelModel = {
+    ...(operationalRouteSourceName && operationalRouteTargetName
+      ? { activeRouteLabel: `${operationalRouteSourceName} → ${operationalRouteTargetName}` }
+      : {}),
     ...(clusterGrammarEnabled
       ? { aggregatedConnectionCount: aggregatedRouteById.size }
       : {}),
@@ -126,12 +172,16 @@ const NeuralCoreContextPanelComponent = ({
     incomingRoutes,
     outgoingRoutes,
     typeLabel: formatNeuralCoreClusterKind(cluster.kind),
-    status: cluster.status ?? topology.status ?? "idle",
-    statusLabel: formatNeuralCoreTopologyStatus(cluster.status ?? topology.status ?? "idle"),
-    ...(typeof cluster.activity === "number" && Number.isFinite(cluster.activity)
-      ? { activityLabel: formatNeuralCoreActivity(cluster.activity) }
+    status: clusterVisualState?.status ?? cluster.status ?? topology.status ?? "idle",
+    statusLabel: clusterVisualState?.operationalStatus === "recovering"
+      ? "Recovering"
+      : formatNeuralCoreTopologyStatus(
+        clusterVisualState?.status ?? cluster.status ?? topology.status ?? "idle",
+      ),
+    ...(typeof resolvedActivity === "number" && Number.isFinite(resolvedActivity)
+      ? { activityLabel: formatNeuralCoreActivity(resolvedActivity) }
       : {}),
-    metrics: (semanticContext?.metrics ?? [])
+    metrics: (metricOverrides ?? semanticContext?.metrics ?? [])
       .slice(0, config.maximumMetrics)
       .map((metric) => ({
         id: metric.id,
@@ -144,12 +194,24 @@ const NeuralCoreContextPanelComponent = ({
     ...(config.showDescription && semanticContext?.description
       ? { description: semanticContext.description }
       : {}),
-    ...(config.showImpact && semanticContext?.impact
+    ...(config.showImpact && (activeOperationalImpact ?? semanticContext?.impact)
       ? {
         impact: {
-          level: semanticContext.impact.level,
-          ...(semanticContext.impact.summary ? { summary: semanticContext.impact.summary } : {}),
+          level: activeOperationalImpact?.level ?? semanticContext?.impact?.level ?? "none",
+          ...((activeOperationalImpact?.summary ?? semanticContext?.impact?.summary)
+            ? { summary: activeOperationalImpact?.summary ?? semanticContext?.impact?.summary }
+            : {}),
           affectedLabels,
+        },
+      }
+      : {}),
+    ...(operationalRetry?.clusterId === cluster.id
+      ? {
+        retry: {
+          attempt: operationalRetry.attempt,
+          maximumAttempts: operationalRetry.maximumAttempts,
+          status: operationalRetry.status,
+          ...(operationalRetry.reason ? { reason: operationalRetry.reason } : {}),
         },
       }
       : {}),

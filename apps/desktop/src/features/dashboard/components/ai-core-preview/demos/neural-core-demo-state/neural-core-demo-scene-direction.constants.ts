@@ -5,7 +5,7 @@ import type {
   NeuralCoreSceneFocusStyle,
   NeuralCoreSceneFocusTarget,
 } from "../../visualization/direction/neural-core-scene-direction.types";
-import type { NeuralCoreDemoScenario } from "./neural-core-demo-state.types";
+import type { NeuralCoreAnimatedDemoScenario } from "./neural-core-demo-state.types";
 
 const OVERVIEW_FOCUS: NeuralCoreSceneFocusStyle = {
   targetEmphasis: 0,
@@ -114,7 +114,7 @@ const overviewCue = (
 };
 
 export const NEURAL_CORE_DEMO_SCENE_DIRECTIONS: Record<
-  Exclude<NeuralCoreDemoScenario, "none">,
+  NeuralCoreAnimatedDemoScenario,
   NeuralCoreSceneDirectionTimeline
 > = {
   "data-flow": {

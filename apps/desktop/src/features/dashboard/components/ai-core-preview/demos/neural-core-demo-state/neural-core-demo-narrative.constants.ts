@@ -3,7 +3,7 @@ import type {
   NeuralCoreNarrative,
   NeuralCoreNarrativePhase,
 } from "../../domain/narrative/neural-core-narrative.types";
-import type { NeuralCoreDemoScenario } from "./neural-core-demo-state.types";
+import type { NeuralCoreAnimatedDemoScenario } from "./neural-core-demo-state.types";
 
 const BURST_BEHAVIOR: NeuralCoreClusterVisualBehaviorConfig = {
   behavior: "burst",
@@ -96,7 +96,7 @@ const pipelineProgress = (
 });
 
 export const NEURAL_CORE_DEMO_NARRATIVES: Record<
-  Exclude<NeuralCoreDemoScenario, "none">,
+  NeuralCoreAnimatedDemoScenario,
   NeuralCoreNarrative
 > = {
   "data-flow": {

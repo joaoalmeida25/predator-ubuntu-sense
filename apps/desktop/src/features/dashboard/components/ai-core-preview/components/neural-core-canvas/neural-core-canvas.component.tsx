@@ -23,6 +23,12 @@ export const NeuralCoreCanvas = ({
   spatialLayoutConfig,
   onPropagationEvent,
   runtimeScenarioKey,
+  runtimePlaybackStatus,
+  runtimePlaybackPaused,
+  runtimeFocusedClusterId,
+  operationalVisualOverlay,
+  operationalPropagationInput,
+  operationalRouteProgressRef,
   cameraResetRevision,
   inspectionConfig,
   inspectionFocus,
@@ -51,6 +57,12 @@ export const NeuralCoreCanvas = ({
       spatialLayoutConfig={spatialLayoutConfig}
       onPropagationEvent={onPropagationEvent}
       runtimeScenarioKey={runtimeScenarioKey}
+      runtimePlaybackStatus={runtimePlaybackStatus}
+      runtimePlaybackPaused={runtimePlaybackPaused}
+      runtimeFocusedClusterId={runtimeFocusedClusterId}
+      operationalVisualOverlay={operationalVisualOverlay}
+      operationalPropagationInput={operationalPropagationInput}
+      operationalRouteProgressRef={operationalRouteProgressRef}
       cameraResetRevision={cameraResetRevision}
       inspectionConfig={inspectionConfig}
       inspectionFocus={inspectionFocus}

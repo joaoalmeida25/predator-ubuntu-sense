@@ -22,6 +22,12 @@ import type {
   NeuralCoreSemanticFocusLensConfig,
   NeuralCoreSemanticFocusLensState,
 } from "../focus-lens/neural-core-semantic-focus-lens.types";
+import type {
+  NeuralCoreOperationalVisualOverlay,
+} from "../../demos/operational/mappers/neural-core-operational-visual-state.mapper";
+import type {
+  NeuralCoreOperationalRouteVisualChannel,
+} from "./neural-core-operational-route-visual-channel.types";
 
 const hasId = (ids: readonly string[], id: string): boolean => ids.includes(id);
 
@@ -190,6 +196,8 @@ export const updateNeuralCoreClusterGrammarRuntime = (
   focusLensState: NeuralCoreSemanticFocusLensState,
   focusLensConfig: NeuralCoreSemanticFocusLensConfig,
   deltaSeconds: number,
+  operationalOverlay?: NeuralCoreOperationalVisualOverlay,
+  operationalRouteVisualChannel?: NeuralCoreOperationalRouteVisualChannel,
 ): void => {
   if (!grammar.enabled) {
     return;
@@ -335,7 +343,8 @@ export const updateNeuralCoreClusterGrammarRuntime = (
     state.activityIntensity = dampNeuralCoreClusterGrammarValue(
       state.activityIntensity,
       Math.max(
-        territory.activity,
+        operationalOverlay?.clusterStateById[territory.clusterId]?.activity
+          ?? territory.activity,
         getClusterPropagationActivity(territory.clusterId, propagationVisualState),
         isProtagonist ? 0.65 : 0,
       ),
@@ -344,9 +353,25 @@ export const updateNeuralCoreClusterGrammarRuntime = (
     );
   }
 
+  const operationalRouteIndex = operationalRouteVisualChannel
+    ? grammar.lookups.routeIndexById[operationalRouteVisualChannel.geometryId]
+    : undefined;
   for (let index = 0; index < runtime.routeStates.length; index += 1) {
     const state = runtime.routeStates[index];
     const route = grammar.routes[index];
+    let routeStatus = route.status;
+    for (const synapseId of route.synapseIds) {
+      const operationalRouteStatus = operationalOverlay?.routeStatusById[synapseId];
+      if (operationalRouteStatus !== undefined) {
+        routeStatus = operationalRouteStatus;
+        break;
+      }
+    }
+    if (index === operationalRouteIndex && operationalRouteVisualChannel) {
+      routeStatus = operationalRouteVisualChannel.status === "recovering"
+        ? "warning"
+        : operationalRouteVisualChannel.status;
+    }
     const isRelated = route.sourceClusterId === focus.selectedClusterId
       || route.targetClusterId === focus.selectedClusterId
       || (
@@ -361,16 +386,17 @@ export const updateNeuralCoreClusterGrammarRuntime = (
           || route.targetClusterId === focus.protagonistClusterId
         )
       );
-    const isActive = isRouteActive(route.synapseIds, propagationVisualState);
+    const isActive = index === operationalRouteIndex
+      || isRouteActive(route.synapseIds, propagationVisualState);
     state.isRelated = isRelated;
     state.isProtagonist = isProtagonist;
     state.isActive = isActive;
     state.priority = route.activity * 2
       + (isProtagonist ? config.routes.protagonistPriority : 0)
-      + (route.status === "error" || route.status === "warning"
+      + (routeStatus === "error" || routeStatus === "warning"
         ? config.routes.criticalPriority
         : 0)
-      + (route.status === "active" || route.status === "processing" || isActive
+      + (routeStatus === "active" || routeStatus === "processing" || isActive
         ? config.routes.activePriority
         : 0)
       + (isRelated ? config.routes.relatedPriority : 0);
@@ -381,6 +407,19 @@ export const updateNeuralCoreClusterGrammarRuntime = (
   for (let index = 0; index < runtime.routeStates.length; index += 1) {
     const state = runtime.routeStates[index];
     const route = grammar.routes[index];
+    let routeStatus = route.status;
+    for (const synapseId of route.synapseIds) {
+      const operationalRouteStatus = operationalOverlay?.routeStatusById[synapseId];
+      if (operationalRouteStatus !== undefined) {
+        routeStatus = operationalRouteStatus;
+        break;
+      }
+    }
+    if (index === operationalRouteIndex && operationalRouteVisualChannel) {
+      routeStatus = operationalRouteVisualChannel.status === "recovering"
+        ? "warning"
+        : operationalRouteVisualChannel.status;
+    }
     const priorityRank = countHigherRoutePriorities(runtime, index);
     const isWithinLimit = priorityRank < maximumRoutes;
     const isVisible = isWithinLimit && (
@@ -388,8 +427,8 @@ export const updateNeuralCoreClusterGrammarRuntime = (
         || state.isRelated
         || state.isProtagonist
         || state.isActive
-        || route.status === "error"
-        || route.status === "warning"
+        || routeStatus === "error"
+        || routeStatus === "warning"
     );
     state.isVisible = isVisible;
     const contextWeight = hasSelection ? state.isRelated ? 1 : 0.18 : 1;
@@ -469,13 +508,15 @@ export const updateNeuralCoreClusterGrammarRuntime = (
     );
     state.detailOpacity = dampNeuralCoreClusterGrammarValue(
       state.detailOpacity,
-      focusLensState.enabled
-        ? state.isProtagonist
-          ? focusLensConfig.routes.microDetailedSynapseOpacity
-          : state.isRelated
-            ? focusLensState.detailedSynapseWeight
-          : focusLensConfig.brainContext.minimumDistantConnectionOpacity
-        : selectedDetail,
+      index === operationalRouteIndex && operationalRouteVisualChannel
+        ? focusLensConfig.brainContext.minimumDistantConnectionOpacity
+        : focusLensState.enabled
+          ? state.isProtagonist
+            ? focusLensConfig.routes.microDetailedSynapseOpacity
+            : state.isRelated
+              ? focusLensState.detailedSynapseWeight
+              : focusLensConfig.brainContext.minimumDistantConnectionOpacity
+          : selectedDetail,
       config.transitionDamping,
       deltaSeconds,
     );

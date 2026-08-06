@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type ReactElement } from "react";
+import { useCallback, useMemo, useRef, useState, type ReactElement } from "react";
 
 import styles from "./ai-core-preview.module.css";
 import { AiCorePreviewView } from "./ai-core-preview-view.component";
@@ -39,6 +39,16 @@ import { resolveNeuralCoreInspectionConfig } from "./domain/inspection/neural-co
 import { useNeuralCoreInspection } from "./hooks/use-neural-core-inspection/use-neural-core-inspection.hook";
 import { NeuralCoreInspectionControls } from "./components/neural-core-inspection-controls/neural-core-inspection-controls.component";
 import { NeuralCoreContextPanel } from "./components/neural-core-context-panel/neural-core-context-panel.component";
+import { NeuralCoreOperationalControls } from "./demos/operational/components/neural-core-operational-controls/neural-core-operational-controls.component";
+import { NEURAL_CORE_OPERATIONAL_SUCCESS_EXECUTION_ID } from "./demos/operational/executions/request-success.execution";
+import { useNeuralCoreOperationalRuntime } from "./demos/operational/hooks/use-neural-core-operational-runtime.hook";
+import { mapOperationalRuntimeToNeuralCoreNarrative } from "./demos/operational/mappers/neural-core-operational-narrative.mapper";
+import { mapNeuralCoreOperationalOutcomeSummary } from "./demos/operational/mappers/neural-core-operational-outcome-summary.mapper";
+import { mapOperationalRouteEventToVisualRequest } from "./demos/operational/mappers/neural-core-operational-propagation.mapper";
+import { mapOperationalRuntimeToNeuralCoreSceneDirection } from "./demos/operational/mappers/neural-core-operational-scene-direction.mapper";
+import { mapOperationalRuntimeToNeuralCoreVisualOverlay } from "./demos/operational/mappers/neural-core-operational-visual-state.mapper";
+import { getNeuralCoreOperationalScenario } from "./demos/operational/scenarios/request-processing.scenario";
+import { mapNeuralCoreInspectionFocus } from "./visualization/inspection/neural-core-inspection-focus.mapper";
 
 const createNeuralNodes = (): AiCorePreviewNode[] => {
   return Array.from({ length: 84 }, (_, index) => {
@@ -77,6 +87,20 @@ const neuralLines: AiCorePreviewLine[] = neuralNodes.flatMap((node, index) => {
       to: candidate,
     }));
 });
+
+const operationalScenario = getNeuralCoreOperationalScenario();
+const operationalExecutionById = new Map(
+  operationalScenario.executions.map((execution) => [execution.id, execution]),
+);
+const operationalExecutionOptions = operationalScenario.executions.map((execution) => ({
+  id: execution.id,
+  label: execution.kind === "failure-recovery"
+    ? "Failure + Recovery"
+    : execution.shortName,
+}));
+const operationalStageById = new Map(
+  operationalScenario.stages.map((stage) => [stage.id, stage]),
+);
 
 export const AiCorePreview = ({
   nodeCountLabel,
@@ -124,14 +148,20 @@ export const AiCorePreview = ({
 }: AiCorePreviewProps): ReactElement => {
   const [internalDemoScenario, setInternalDemoScenario] = useState(defaultDemoScenario);
   const [demoReplayRevision, setDemoReplayRevision] = useState(0);
+  const [selectedOperationalExecutionId, setSelectedOperationalExecutionId] = useState(
+    NEURAL_CORE_OPERATIONAL_SUCCESS_EXECUTION_ID,
+  );
   const [narrativeOverlayState, setNarrativeOverlayState] = useState<NeuralCoreNarrativeState>(
     EMPTY_NEURAL_CORE_NARRATIVE_STATE,
   );
+  const [dismissedOperationalPanelKey, setDismissedOperationalPanelKey] = useState<string>();
   const selectedDemoScenario = demoScenario ?? internalDemoScenario;
   const handleDemoScenarioChange = useCallback((scenario: NeuralCoreDemoScenario): void => {
     if (demoScenario === undefined) {
       setInternalDemoScenario(scenario);
     }
+    setDismissedOperationalPanelKey(undefined);
+    setSelectedOperationalExecutionId(NEURAL_CORE_OPERATIONAL_SUCCESS_EXECUTION_ID);
     setDemoReplayRevision((revision) => revision + 1);
     onDemoScenarioChange?.(scenario);
   }, [demoScenario, onDemoScenarioChange]);
@@ -185,16 +215,120 @@ export const AiCorePreview = ({
     return createNeuralCoreDemoDefinition(selectedDemoScenario);
   }, [selectedDemoScenario]);
   const hasExplicitDefinition = state !== undefined || choreography !== undefined;
-  const effectiveState = state ?? demoDefinition.state;
+  const operationalRuntimeEnabled = selectedDemoScenario === "operational-flow"
+    && !hasExplicitDefinition;
+  const baseState = state ?? demoDefinition.state;
   const effectiveChoreography = choreography
     ?? (state === undefined ? demoDefinition.choreography : undefined);
-  const effectiveSceneDirection = sceneDirection
+  const baseSceneDirection = sceneDirection
     ?? (state === undefined ? demoDefinition.sceneDirection : undefined);
-  const selectedNarrative = narrative
+  const baseNarrative = narrative
     ?? (state === undefined ? demoDefinition.narrative : undefined);
+  const baseTopology = useMemo((): NeuralCoreTopology | undefined => {
+    if (!baseState) {
+      return undefined;
+    }
+    return baseState.topology
+      ? normalizeNeuralCoreTopology(baseState.topology)
+      : createNeuralCoreTopologyFromState(baseState);
+  }, [baseState]);
+  const runtimeScenarioKey = hasExplicitDefinition
+    ? `explicit:${selectedDemoScenario}:${effectiveChoreography?.id ?? "state"}:${baseSceneDirection?.id ?? "overview"}:${baseNarrative?.id ?? "no-narrative"}`
+    : `${selectedDemoScenario}:${demoReplayRevision}`;
+  const inspection = useNeuralCoreInspection({
+    config: resolvedInspectionConfig,
+    topology: baseTopology,
+    runtimeScenarioKey,
+    interactionMode,
+    defaultInteractionMode,
+    onInteractionModeChange,
+    selectedClusterId,
+    defaultSelectedClusterId,
+    onSelectedClusterChange,
+    paused,
+    defaultPaused,
+    onPausedChange,
+  });
+  const operationalRuntimeConfig = useMemo(() => ({
+    enabled: operationalRuntimeEnabled,
+    autoStart: false,
+    playbackRate: 1,
+    autoFollowInPresentation: true,
+  }), [operationalRuntimeEnabled]);
+  const selectedOperationalExecution = operationalExecutionById.get(
+    selectedOperationalExecutionId,
+  ) ?? operationalScenario.executions[0];
+  const operationalRuntime = useNeuralCoreOperationalRuntime({
+    execution: selectedOperationalExecution,
+    scenario: operationalScenario,
+    config: operationalRuntimeConfig,
+    suspended: inspection.state.isPaused,
+    resetKey: `${selectedDemoScenario}:${demoReplayRevision}:${selectedOperationalExecution.id}`,
+  });
+  const topology = baseTopology;
+  const operationalVisualActive = operationalRuntime.snapshot.status !== "idle";
+  const operationalVisualOverlay = useMemo(() => (
+    operationalRuntimeEnabled && topology && operationalVisualActive
+      ? mapOperationalRuntimeToNeuralCoreVisualOverlay({
+        baseTopology: topology,
+        snapshot: operationalRuntime.snapshot,
+      })
+      : undefined
+  ), [operationalRuntime.snapshot, operationalRuntimeEnabled, operationalVisualActive, topology]);
+  const operationalPropagationInput = useMemo(() => {
+    const event = operationalRuntime.activeRouteEvent;
+    const presentationEvent = operationalRuntime.activeRoutePresentationEvent;
+    const route = operationalRuntime.activeRoute;
+    if (!operationalRuntimeEnabled || !event || !presentationEvent || !route) {
+      return undefined;
+    }
+    return mapOperationalRouteEventToVisualRequest({
+      executionId: selectedOperationalExecution.id,
+      event,
+      route,
+      presentationEvent,
+    });
+  }, [
+    operationalRuntime.activeRoute,
+    operationalRuntime.activeRouteEvent,
+    operationalRuntime.activeRoutePresentationEvent,
+    operationalRuntimeEnabled,
+    selectedOperationalExecution.id,
+  ]);
+  const operationalNarrativeStatus = operationalRuntime.snapshot.status === "idle"
+    ? "idle"
+    : operationalRuntime.snapshot.status === "completed" ? "completed" : "active";
+  const operationalNarrative = useMemo(() => (
+    operationalRuntimeEnabled
+      ? mapOperationalRuntimeToNeuralCoreNarrative(operationalRuntime.snapshot)
+      : undefined
+  ), [
+    operationalNarrativeStatus,
+    operationalRuntime.snapshot.activeClusterId,
+    operationalRuntime.snapshot.activeRouteId,
+    operationalRuntime.snapshot.completedStageIds,
+    operationalRuntime.snapshot.executionId,
+    operationalRuntime.snapshot.narrative,
+    operationalRuntime.snapshot.nextClusterId,
+    operationalRuntime.snapshot.outcome,
+    operationalRuntimeEnabled,
+  ]);
+  const selectedNarrative = operationalNarrative ?? baseNarrative;
   const effectiveNarrative = resolvedNarrativeConfig.enabled
     ? selectedNarrative
     : undefined;
+  const operationalSceneDirection = useMemo(() => (
+    operationalRuntimeEnabled && operationalRuntime.autoFollowInPresentation
+      ? mapOperationalRuntimeToNeuralCoreSceneDirection(operationalRuntime.snapshot)
+      : undefined
+  ), [
+    operationalRuntime.autoFollowInPresentation,
+    operationalNarrativeStatus,
+    operationalRuntime.snapshot.activeClusterId,
+    operationalRuntime.snapshot.executionId,
+    operationalRuntimeEnabled,
+  ]);
+  const effectiveSceneDirection = operationalSceneDirection ?? baseSceneDirection;
   const handleNarrativeStateChange = useCallback((nextState: NeuralCoreNarrativeState): void => {
     setNarrativeOverlayState((currentState) => {
       return currentState.narrativeId === nextState.narrativeId
@@ -207,32 +341,70 @@ export const AiCorePreview = ({
   const visibleNarrativeState = narrativeOverlayState.narrativeId === effectiveNarrative?.id
     ? narrativeOverlayState
     : EMPTY_NEURAL_CORE_NARRATIVE_STATE;
-  const topology = useMemo((): NeuralCoreTopology | undefined => {
-    if (!effectiveState) {
-      return undefined;
+  const operationalPanelFocus = useMemo(() => (
+    topology && operationalRuntime.snapshot.activeClusterId
+      ? mapNeuralCoreInspectionFocus({
+        topology,
+        selectedClusterId: operationalRuntime.snapshot.activeClusterId,
+      })
+      : undefined
+  ), [operationalRuntime.snapshot.activeClusterId, topology]);
+  const operationalPanelKey = operationalRuntime.snapshot.narrative?.eventId;
+  const manualPanelActive = inspection.focus.selectedClusterId !== undefined;
+  const runtimePanelActive = operationalRuntimeEnabled
+    && inspection.state.mode === "presentation"
+    && operationalRuntime.snapshot.status !== "idle"
+    && operationalPanelFocus?.selectedClusterId !== undefined
+    && dismissedOperationalPanelKey !== operationalPanelKey;
+  const contextPanelFocus = manualPanelActive ? inspection.focus : operationalPanelFocus;
+  const manualPanelActiveRef = useRef(manualPanelActive);
+  const operationalPanelKeyRef = useRef(operationalPanelKey);
+  manualPanelActiveRef.current = manualPanelActive;
+  operationalPanelKeyRef.current = operationalPanelKey;
+  const handleContextPanelClose = useCallback((): void => {
+    if (manualPanelActiveRef.current) {
+      inspection.clearSelection();
+      return;
     }
-
-    return effectiveState.topology
-      ? normalizeNeuralCoreTopology(effectiveState.topology)
-      : createNeuralCoreTopologyFromState(effectiveState);
-  }, [effectiveState]);
-  const runtimeScenarioKey = hasExplicitDefinition
-    ? `explicit:${selectedDemoScenario}:${effectiveChoreography?.id ?? "state"}:${effectiveSceneDirection?.id ?? "overview"}:${effectiveNarrative?.id ?? "no-narrative"}`
-    : `${selectedDemoScenario}:${demoReplayRevision}`;
-  const inspection = useNeuralCoreInspection({
-    config: resolvedInspectionConfig,
-    topology,
-    runtimeScenarioKey,
-    interactionMode,
-    defaultInteractionMode,
-    onInteractionModeChange,
-    selectedClusterId,
-    defaultSelectedClusterId,
-    onSelectedClusterChange,
-    paused,
-    defaultPaused,
-    onPausedChange,
-  });
+    setDismissedOperationalPanelKey(operationalPanelKeyRef.current);
+  }, [inspection.clearSelection]);
+  const contextPanelClusterId = contextPanelFocus?.selectedClusterId;
+  const contextPanelClusterVisualState = contextPanelClusterId
+    ? operationalVisualOverlay?.clusterStateById[contextPanelClusterId]
+    : undefined;
+  const contextPanelMetrics = contextPanelClusterId
+    ? operationalVisualOverlay?.metricsByClusterId[contextPanelClusterId]
+    : undefined;
+  const activeOperationalStage = operationalRuntime.snapshot.activeStageId
+    ? operationalStageById.get(operationalRuntime.snapshot.activeStageId)
+    : undefined;
+  const operationalStageName = operationalRuntime.snapshot.status === "completed"
+    ? "Execution complete"
+    : activeOperationalStage?.name ?? "Architecture ready";
+  const operationalOutcomeSummary = useMemo(() => (
+    operationalRuntime.snapshot.outcome
+      ? mapNeuralCoreOperationalOutcomeSummary({
+        scenario: operationalScenario,
+        execution: selectedOperationalExecution,
+        outcome: operationalRuntime.snapshot.outcome,
+      })
+      : undefined
+  ), [operationalRuntime.snapshot.outcome, selectedOperationalExecution]);
+  const handleOperationalRun = useCallback((): void => {
+    setDismissedOperationalPanelKey(undefined);
+    operationalRuntime.run();
+  }, [operationalRuntime.run]);
+  const handleOperationalRestart = useCallback((): void => {
+    setDismissedOperationalPanelKey(undefined);
+    operationalRuntime.restart();
+  }, [operationalRuntime.restart]);
+  const handleOperationalExecutionChange = useCallback((executionId: string): void => {
+    if (!operationalExecutionById.has(executionId)) {
+      return;
+    }
+    setDismissedOperationalPanelKey(undefined);
+    setSelectedOperationalExecutionId(executionId);
+  }, []);
 
   return (
     <AiCorePreviewView
@@ -249,17 +421,22 @@ export const AiCorePreview = ({
         />
       ) : undefined}
       contextPanel={
-        inspection.state.mode === "inspection"
-        && resolvedInspectionConfig.panel.enabled
-        && inspection.focus.selectedClusterId
+        resolvedInspectionConfig.panel.enabled
+        && (manualPanelActive || runtimePanelActive)
+        && contextPanelFocus?.selectedClusterId
         && topology
           ? (
             <NeuralCoreContextPanel
               clusterGrammarEnabled={resolvedClusterGrammarConfig.enabled}
               config={resolvedInspectionConfig.panel}
-              focus={inspection.focus}
+              focus={contextPanelFocus}
+              clusterVisualState={contextPanelClusterVisualState}
+              metricOverrides={contextPanelMetrics}
+              operationalRouteId={operationalRuntime.snapshot.activeRouteId}
+              operationalImpact={operationalRuntime.snapshot.impact}
+              operationalRetry={operationalRuntime.snapshot.retry}
               topology={topology}
-              onClose={inspection.clearSelection}
+              onClose={handleContextPanelClose}
             />
           )
           : undefined
@@ -277,6 +454,29 @@ export const AiCorePreview = ({
           disabled={hasExplicitDefinition}
           onScenarioChange={handleDemoScenarioChange}
           options={NEURAL_CORE_DEMO_OPTIONS}
+        />
+      ) : undefined}
+      operationalControls={operationalRuntimeEnabled ? (
+        <NeuralCoreOperationalControls
+          executionName={selectedOperationalExecution.shortName}
+          executionOptions={operationalExecutionOptions}
+          selectedExecutionId={selectedOperationalExecution.id}
+          selectorDisabled={
+            operationalRuntime.snapshot.status !== "idle"
+            && operationalRuntime.snapshot.status !== "completed"
+          }
+          stageName={operationalStageName}
+          status={operationalRuntime.snapshot.status}
+          isPaused={operationalRuntime.snapshot.isPaused}
+          retry={operationalRuntime.snapshot.retry}
+          outcomeSummary={operationalOutcomeSummary}
+          progressBarRef={operationalRuntime.progressBarRef}
+          progressLabelRef={operationalRuntime.progressLabelRef}
+          onRun={handleOperationalRun}
+          onPause={operationalRuntime.pause}
+          onResume={operationalRuntime.resume}
+          onRestart={handleOperationalRestart}
+          onExecutionChange={handleOperationalExecutionChange}
         />
       ) : undefined}
       engineVersion={engineVersion}
@@ -299,6 +499,20 @@ export const AiCorePreview = ({
       spatialLayoutConfig={resolvedSpatialLayoutConfig}
       onPropagationEvent={onPropagationEvent}
       runtimeScenarioKey={runtimeScenarioKey}
+      runtimePlaybackStatus={operationalRuntimeEnabled
+        ? operationalRuntime.snapshot.status
+        : undefined}
+      runtimePlaybackPaused={operationalRuntimeEnabled
+        ? operationalRuntime.snapshot.isPaused
+        : undefined}
+      runtimeFocusedClusterId={operationalRuntimeEnabled
+        ? operationalRuntime.snapshot.activeClusterId
+        : undefined}
+      operationalVisualOverlay={operationalVisualOverlay}
+      operationalPropagationInput={operationalPropagationInput}
+      operationalRouteProgressRef={operationalRuntimeEnabled
+        ? operationalRuntime.activeRouteProgressRef
+        : undefined}
       callouts={[
         {
           className: styles.calloutLeftTop,

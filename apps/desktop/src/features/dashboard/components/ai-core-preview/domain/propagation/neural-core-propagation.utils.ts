@@ -51,6 +51,14 @@ export const getEffectiveTransmissionDuration = (
   synapse: NeuralCoreSynapse,
   config: NeuralCorePropagationConfig,
 ): number => {
+  const explicitDurationSeconds = transmission.metadata?.durationSeconds;
+  if (
+    typeof explicitDurationSeconds === "number"
+    && Number.isFinite(explicitDurationSeconds)
+    && explicitDurationSeconds > 0
+  ) {
+    return Math.max(0.001, explicitDurationSeconds);
+  }
   const conductivity = clampPropagationValue(synapse.conductivity ?? 0.5);
   const speed = clampPropagationValue(transmission.speed ?? 0.5);
   const conductivityFactor = 0.45 + conductivity * 1.1;

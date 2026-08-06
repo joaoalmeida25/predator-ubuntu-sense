@@ -25,9 +25,12 @@ import { NEURAL_CORE_DEMO_NARRATIVES } from "./neural-core-demo-narrative.consta
 import { DEFAULT_NEURAL_CORE_DEMO_SCENARIO } from "./neural-core-demo-state.constants";
 import { NEURAL_CORE_DEMO_CLUSTER_SEMANTIC_CONTEXTS } from "./neural-core-demo-semantic-context.constants";
 import type {
+  NeuralCoreAnimatedDemoScenario,
   NeuralCoreDemoDefinition,
   NeuralCoreDemoScenario,
 } from "./neural-core-demo-state.types";
+import { mapOperationalScenarioToNeuralCoreDemo } from "../operational/mappers/neural-core-operational-scenario.mapper";
+import { getNeuralCoreOperationalScenario } from "../operational/scenarios/request-processing.scenario";
 
 interface NeuralCoreDemoClusterDefinition {
   id: string;
@@ -59,7 +62,7 @@ interface NeuralCoreDemoRouteDefinition {
 }
 
 interface NeuralCoreDemoStateDefinition {
-  scenario: Exclude<NeuralCoreDemoScenario, "none">;
+  scenario: NeuralCoreAnimatedDemoScenario;
   mode: NeuralCoreMode;
   accentColor: NeuralCoreAccentColor;
   globalActivity: number;
@@ -750,6 +753,10 @@ export const createNeuralCoreDemoDefinition = (
       return createErrorDemoDefinition();
     case "success-state":
       return createSuccessDemoDefinition();
+    case "operational-flow":
+      return mapOperationalScenarioToNeuralCoreDemo(
+        getNeuralCoreOperationalScenario(),
+      );
     case "none":
       return { scenario };
   }

@@ -46,7 +46,8 @@ export const NeuralCoreContextPanelView = ({
     || model.synapses.length > 0
     || model.pathways.length > 0
     || model.incomingRoutes.length > 0
-    || model.outgoingRoutes.length > 0;
+    || model.outgoingRoutes.length > 0
+    || model.activeRouteLabel !== undefined;
   const panelStyle: NeuralCoreContextPanelStyle = {
     "--neural-core-context-panel-width": `${widthPx}px`,
     "--neural-core-context-panel-compact-width": `${compactWidthPx}px`,
@@ -121,6 +122,15 @@ export const NeuralCoreContextPanelView = ({
             ) : null}
           </section>
         ) : null}
+        {model.retry ? (
+          <section className={styles.retry} data-retry-status={model.retry.status}>
+            <h4>Recovery · {model.retry.status}</h4>
+            <strong>
+              Attempt {model.retry.attempt} of {model.retry.maximumAttempts}
+            </strong>
+            {model.retry.reason ? <p>{model.retry.reason}</p> : null}
+          </section>
+        ) : null}
         {hasRelationships ? (
           <section>
             <h4>
@@ -128,6 +138,12 @@ export const NeuralCoreContextPanelView = ({
                 ? "Relationships"
                 : `Relationships · ${model.aggregatedConnectionCount} routes`}
             </h4>
+            {model.activeRouteLabel ? (
+              <RelationshipGroup
+                label="Active transmission"
+                values={[model.activeRouteLabel]}
+              />
+            ) : null}
             {model.incomingRoutes.length > 0 ? (
               <RelationshipGroup label="Input routes" values={model.incomingRoutes} />
             ) : null}

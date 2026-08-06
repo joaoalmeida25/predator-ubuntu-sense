@@ -195,6 +195,21 @@
   border-top-color: rgba(238, 79, 110, 0.26);
 }
 
+.retry {
+  border-top-color: rgba(243, 173, 66, 0.22);
+}
+
+.retry strong {
+  display: block;
+  margin-bottom: 5px;
+  color: rgba(244, 211, 132, 0.92);
+  font-size: 10px;
+}
+
+.retry[data-retry-status="succeeded"] strong {
+  color: #56e3a7;
+}
+
 .relationshipGroup {
   margin-bottom: 9px;
 }

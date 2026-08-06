@@ -9,12 +9,19 @@ import {
 } from "../../domain/propagation/neural-core-propagation.engine";
 import {
   createNeuralCorePropagationPlan,
+  createNeuralCorePropagationPlanWithTransmission,
   createNeuralCoreTopologyKey,
 } from "../../domain/propagation/neural-core-propagation.plan";
 import type {
+  NeuralCorePropagationConfig,
   NeuralCorePropagationPlan,
   NeuralCorePropagationRuntimeState,
 } from "../../domain/propagation/neural-core-propagation.types";
+import type {
+  NeuralCoreTopology,
+  NeuralCoreTransmission,
+} from "../../domain/topology/neural-core-topology.types";
+import { clampPropagationValue } from "../../domain/propagation/neural-core-propagation.utils";
 import {
   createNeuralCorePropagationVisualRuntime,
   EMPTY_NEURAL_CORE_PROPAGATION_VISUAL_STATE,
@@ -22,82 +29,169 @@ import {
 } from "../../visualization/propagation/neural-core-propagation-visual.mapper";
 import type { NeuralCorePropagationVisualState } from "../../visualization/propagation/neural-core-propagation-visual.types";
 import type {
+  NeuralCorePropagationProgressRef,
   UseNeuralCorePropagationParams,
   UseNeuralCorePropagationResult,
 } from "./use-neural-core-propagation.types";
 
+interface NeuralCorePropagationPlanCache {
+  source?: NeuralCoreTopology;
+  key: string;
+  plan?: NeuralCorePropagationPlan;
+}
+
+interface NeuralCorePropagationConfigCache {
+  source: NeuralCorePropagationConfig;
+  key: string;
+  value: NeuralCorePropagationConfig;
+}
+
+interface NeuralCoreExternalPropagationCache {
+  basePlan?: NeuralCorePropagationPlan;
+  transmission?: NeuralCoreTransmission;
+  plan?: NeuralCorePropagationPlan;
+}
+
+const getExternalProgressDelta = (
+  runtime: NeuralCorePropagationRuntimeState,
+  transmission: NeuralCoreTransmission,
+  progressRef: NeuralCorePropagationProgressRef,
+): number => {
+  let propagation: NeuralCorePropagationRuntimeState["activePropagations"][number]
+  | undefined;
+  for (const candidate of runtime.activePropagations) {
+    if (candidate.transmissionId === transmission.id) {
+      propagation = candidate;
+      break;
+    }
+  }
+  if (!propagation) {
+    return 0;
+  }
+  const desiredProgress = clampPropagationValue(progressRef.current);
+  return Math.max(0, desiredProgress - propagation.progress) * propagation.durationSeconds;
+};
+
 export const useNeuralCorePropagation = ({
   config,
+  externalTransmission,
+  externalProgressRef,
   onPropagationEvent,
   resetKey = "none",
   topology,
 }: UseNeuralCorePropagationParams): UseNeuralCorePropagationResult => {
   const callbackRef = useRef(onPropagationEvent);
   callbackRef.current = onPropagationEvent;
+  const externalProgressRefRef = useRef(externalProgressRef);
+  externalProgressRefRef.current = externalProgressRef;
 
-  const topologyKey = topology ? createNeuralCoreTopologyKey(topology) : "none";
-  const planCacheRef = useRef<{ key: string; plan?: NeuralCorePropagationPlan }>({
+  const planCacheRef = useRef<NeuralCorePropagationPlanCache>({
     key: "uninitialized",
   });
-  if (planCacheRef.current.key !== topologyKey) {
-    planCacheRef.current = {
-      key: topologyKey,
-      plan: topology ? createNeuralCorePropagationPlan(topology) : undefined,
+  if (planCacheRef.current.source !== topology) {
+    const key = topology ? createNeuralCoreTopologyKey(topology) : "none";
+    planCacheRef.current = key === planCacheRef.current.key
+      ? { ...planCacheRef.current, source: topology }
+      : {
+        source: topology,
+        key,
+        plan: topology ? createNeuralCorePropagationPlan(topology) : undefined,
+      };
+  }
+
+  const configCacheRef = useRef<NeuralCorePropagationConfigCache>({
+    source: config,
+    key: createNeuralCorePropagationConfigKey(config),
+    value: config,
+  });
+  if (configCacheRef.current.source !== config) {
+    const key = createNeuralCorePropagationConfigKey(config);
+    configCacheRef.current = key === configCacheRef.current.key
+      ? { ...configCacheRef.current, source: config }
+      : { source: config, key, value: config };
+  }
+
+  const basePlan = planCacheRef.current.plan;
+  const externalPlanCacheRef = useRef<NeuralCoreExternalPropagationCache>({});
+  if (
+    externalPlanCacheRef.current.basePlan !== basePlan
+    || externalPlanCacheRef.current.transmission !== externalTransmission
+  ) {
+    externalPlanCacheRef.current = {
+      basePlan,
+      transmission: externalTransmission,
+      plan: basePlan && externalTransmission
+        ? createNeuralCorePropagationPlanWithTransmission(basePlan, externalTransmission)
+        : basePlan,
     };
   }
-
-  const configKey = createNeuralCorePropagationConfigKey(config);
-  const configCacheRef = useRef({ key: configKey, value: config });
-  if (configCacheRef.current.key !== configKey) {
-    configCacheRef.current = { key: configKey, value: config };
-  }
-
-  const plan = planCacheRef.current.plan;
+  const effectivePlan = externalPlanCacheRef.current.plan;
   const stableConfig = configCacheRef.current.value;
-  const visualRuntimeKey = `${topologyKey}:${configKey}`;
   const visualRuntimeCacheRef = useRef<{
-    key: string;
+    plan?: NeuralCorePropagationPlan;
+    config?: NeuralCorePropagationConfig;
     value?: ReturnType<typeof createNeuralCorePropagationVisualRuntime>;
-  }>({ key: "uninitialized" });
-  if (visualRuntimeCacheRef.current.key !== visualRuntimeKey) {
+  }>({});
+  if (
+    visualRuntimeCacheRef.current.plan !== effectivePlan
+    || visualRuntimeCacheRef.current.config !== stableConfig
+  ) {
     visualRuntimeCacheRef.current = {
-      key: visualRuntimeKey,
-      value: plan
-        ? createNeuralCorePropagationVisualRuntime(plan, stableConfig)
+      plan: effectivePlan,
+      config: stableConfig,
+      value: effectivePlan
+        ? createNeuralCorePropagationVisualRuntime(effectivePlan, stableConfig)
         : undefined,
     };
   }
-  const identityKey = `${resetKey}:${topologyKey}:${configKey}`;
+
   const runtimeRef = useRef<NeuralCorePropagationRuntimeState | null>(null);
-  if (!runtimeRef.current) {
-    runtimeRef.current = createNeuralCorePropagationRuntime({ plan, config: stableConfig });
-  }
-  const runtimeIdentityRef = useRef(identityKey);
-  if (runtimeIdentityRef.current !== identityKey) {
-    runtimeIdentityRef.current = identityKey;
-    runtimeRef.current = createNeuralCorePropagationRuntime({ plan, config: stableConfig });
+  const runtimeIdentityRef = useRef<{
+    resetKey: string;
+    plan?: NeuralCorePropagationPlan;
+    config?: NeuralCorePropagationConfig;
+  }>({ resetKey: "uninitialized" });
+  if (
+    !runtimeRef.current
+    || runtimeIdentityRef.current.resetKey !== resetKey
+    || runtimeIdentityRef.current.plan !== effectivePlan
+    || runtimeIdentityRef.current.config !== stableConfig
+  ) {
+    runtimeIdentityRef.current = { resetKey, plan: effectivePlan, config: stableConfig };
+    runtimeRef.current = createNeuralCorePropagationRuntime({
+      plan: effectivePlan,
+      config: stableConfig,
+    });
   }
 
   const reset = useCallback((): void => {
+    const plan = externalPlanCacheRef.current.plan;
+    const stableConfigValue = configCacheRef.current.value;
     runtimeRef.current = createNeuralCorePropagationRuntime({
-      plan: planCacheRef.current.plan,
-      config: configCacheRef.current.value,
+      plan,
+      config: stableConfigValue,
     });
   }, []);
 
   const advance = useCallback((deltaSeconds: number): NeuralCorePropagationVisualState => {
-    const currentPlan = planCacheRef.current.plan;
+    const currentPlan = externalPlanCacheRef.current.plan;
     const currentVisualRuntime = visualRuntimeCacheRef.current.value;
     if (!currentPlan || !currentVisualRuntime) {
       return EMPTY_NEURAL_CORE_PROPAGATION_VISUAL_STATE;
     }
-    const step = advanceNeuralCorePropagation({
-      runtime: runtimeRef.current ?? createNeuralCorePropagationRuntime({
-        plan: currentPlan,
-        config: configCacheRef.current.value,
-      }),
+    const currentRuntime = runtimeRef.current ?? createNeuralCorePropagationRuntime({
       plan: currentPlan,
-      deltaSeconds,
+      config: configCacheRef.current.value,
+    });
+    const activeTransmission = externalPlanCacheRef.current.transmission;
+    const progressValueRef = externalProgressRefRef.current;
+    const effectiveDeltaSeconds = activeTransmission && progressValueRef
+      ? getExternalProgressDelta(currentRuntime, activeTransmission, progressValueRef)
+      : deltaSeconds;
+    const step = advanceNeuralCorePropagation({
+      runtime: currentRuntime,
+      plan: currentPlan,
+      deltaSeconds: effectiveDeltaSeconds,
       config: configCacheRef.current.value,
     });
     runtimeRef.current = step.runtime;
@@ -114,5 +208,10 @@ export const useNeuralCorePropagation = ({
     });
   }, []);
 
-  return { advance, config: stableConfig, plan, reset };
+  return {
+    advance,
+    config: stableConfig,
+    plan: basePlan,
+    reset,
+  };
 };

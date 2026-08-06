@@ -118,6 +118,7 @@ export interface NeuralCoreClusterGrammarConfigInput {
 
 export interface NeuralCoreClusterGrammarLookups {
   routeIndicesByClusterId: Readonly<Record<string, readonly number[]>>;
+  routeIndexById: Readonly<Record<string, number>>;
   routeIndexBySynapseId: Readonly<Record<string, number>>;
   territoryIndexByClusterId: Readonly<Record<string, number>>;
 }

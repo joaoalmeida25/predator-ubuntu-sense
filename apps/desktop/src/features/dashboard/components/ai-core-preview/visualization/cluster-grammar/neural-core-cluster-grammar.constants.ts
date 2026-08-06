@@ -40,6 +40,7 @@ export const EMPTY_NEURAL_CORE_CLUSTER_GRAMMAR_STATE: NeuralCoreClusterGrammarSt
   routes: [],
   lookups: {
     routeIndicesByClusterId: {},
+    routeIndexById: {},
     routeIndexBySynapseId: {},
     territoryIndexByClusterId: {},
   },

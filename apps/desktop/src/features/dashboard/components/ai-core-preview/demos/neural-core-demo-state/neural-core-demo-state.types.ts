@@ -2,6 +2,7 @@ import type { NeuralCoreChoreography } from "../../domain/choreography/neural-co
 import type { NeuralCoreState } from "../../domain/contract/neural-core-contract.types";
 import type { NeuralCoreSceneDirectionTimeline } from "../../visualization/direction/neural-core-scene-direction.types";
 import type { NeuralCoreNarrative } from "../../domain/narrative/neural-core-narrative.types";
+import type { NeuralCoreOperationalDemoMetadata } from "../operational/domain/neural-core-operational-scenario.types";
 
 export type NeuralCoreDemoScenario =
   | "none"
@@ -11,7 +12,13 @@ export type NeuralCoreDemoScenario =
   | "process-pipeline"
   | "warning-state"
   | "error-state"
-  | "success-state";
+  | "success-state"
+  | "operational-flow";
+
+export type NeuralCoreAnimatedDemoScenario = Exclude<
+  NeuralCoreDemoScenario,
+  "none" | "operational-flow"
+>;
 
 export interface NeuralCoreDemoOption {
   scenario: NeuralCoreDemoScenario;
@@ -26,4 +33,5 @@ export interface NeuralCoreDemoDefinition {
   choreography?: NeuralCoreChoreography;
   sceneDirection?: NeuralCoreSceneDirectionTimeline;
   narrative?: NeuralCoreNarrative;
+  operational?: NeuralCoreOperationalDemoMetadata;
 }

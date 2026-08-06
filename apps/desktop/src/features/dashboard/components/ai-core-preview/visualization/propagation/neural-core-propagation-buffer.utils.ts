@@ -1,8 +1,13 @@
 import type { NeuralCorePropagationConfig } from "../../domain/propagation/neural-core-propagation.types";
-import type { NeuralCorePropagationVisualState } from "./neural-core-propagation-visual.types";
+import type {
+  NeuralCorePropagationVisualPulse,
+  NeuralCorePropagationVisualState,
+} from "./neural-core-propagation-visual.types";
 import type {
   NeuralCorePropagationBufferState,
+  NeuralCorePropagationBufferUpdateResult,
   NeuralCorePropagationClusterBufferRegion,
+  NeuralCoreOperationalProtagonistMarkerField,
   NeuralCorePropagationPointField,
 } from "./neural-core-propagation-buffer.types";
 import type {
@@ -24,12 +29,26 @@ import {
 import type { NeuralCoreCameraRenderingProfile } from "../inspection/neural-core-camera-rendering.types";
 import type { NeuralCoreElementVisualComposition } from "../inspection/neural-core-element-visual-composition.types";
 import { writeNeuralCoreElementVisualComposition } from "../inspection/neural-core-element-visual-composition.utils";
+import {
+  getNeuralCoreClusterGrammarCurvePoint,
+} from "../cluster-grammar/neural-core-cluster-grammar.utils";
+import type {
+  NeuralCoreOperationalRouteVisualChannel,
+} from "../cluster-grammar/neural-core-operational-route-visual-channel.types";
+import {
+  NEURAL_CORE_TOPOLOGY_STATUS_COLORS,
+} from "../topology/neural-core-topology-visual.constants";
+import {
+  NEURAL_CORE_OPERATIONAL_PROTAGONIST_MARKER_CONFIG,
+} from "./neural-core-operational-protagonist-marker.constants";
 
 const clampBufferValue = (value: number, minimum = 0, maximum = 1): number => {
   return Math.min(maximum, Math.max(minimum, Number.isFinite(value) ? value : minimum));
 };
 
 const DEFAULT_PACKED_COLOR = 0x8cf2ff;
+const OPERATIONAL_ROUTE_TANGENT_SAMPLE_DELTA = 0.006;
+const OPERATIONAL_ROUTE_TANGENT_EPSILON = 0.000001;
 
 const PROPAGATION_VISUAL_COMPOSITION: NeuralCoreElementVisualComposition = {
   opacity: 1,
@@ -73,6 +92,12 @@ const getPackedColorBlue = (packedColor: number): number => {
   return (packedColor & 255) / 255;
 };
 
+const convertSrgbChannelToLinear = (channel: number): number => {
+  return channel <= 0.04045
+    ? channel / 12.92
+    : Math.pow((channel + 0.055) / 1.055, 2.4);
+};
+
 export const writeNeuralCoreRoutePositionAtProgress = (
   positions: Float32Array,
   pointIndex: number,
@@ -101,6 +126,93 @@ export const writeNeuralCoreRoutePositionAtProgress = (
     + endWeight * route.end[2];
 };
 
+const writeNeuralCoreOperationalRoutePositionAtProgress = (
+  positions: Float32Array,
+  pointIndex: number,
+  channel: NeuralCoreOperationalRouteVisualChannel,
+  progress: number,
+  scratchPoint: NeuralCoreVector3,
+): void => {
+  getNeuralCoreClusterGrammarCurvePoint(
+    channel.controlPoints,
+    clampBufferValue(progress),
+    scratchPoint,
+  );
+  const offset = pointIndex * 3;
+  positions[offset] = scratchPoint[0];
+  positions[offset + 1] = scratchPoint[1];
+  positions[offset + 2] = scratchPoint[2];
+};
+
+export const writeNeuralCoreOperationalRouteTangentAtProgress = (
+  target: NeuralCoreVector3,
+  channel: NeuralCoreOperationalRouteVisualChannel,
+  progress: number,
+  direction: "forward" | "backward",
+  previousScratch: NeuralCoreVector3,
+  nextScratch: NeuralCoreVector3,
+): void => {
+  const amount = clampBufferValue(progress);
+  const previousProgress = Math.max(
+    0,
+    amount - OPERATIONAL_ROUTE_TANGENT_SAMPLE_DELTA,
+  );
+  const nextProgress = Math.min(
+    1,
+    amount + OPERATIONAL_ROUTE_TANGENT_SAMPLE_DELTA,
+  );
+  getNeuralCoreClusterGrammarCurvePoint(
+    channel.controlPoints,
+    previousProgress,
+    previousScratch,
+  );
+  getNeuralCoreClusterGrammarCurvePoint(
+    channel.controlPoints,
+    nextProgress,
+    nextScratch,
+  );
+  const directionMultiplier = direction === "backward" ? -1 : 1;
+  let tangentX = (nextScratch[0] - previousScratch[0]) * directionMultiplier;
+  let tangentY = (nextScratch[1] - previousScratch[1]) * directionMultiplier;
+  let tangentZ = (nextScratch[2] - previousScratch[2]) * directionMultiplier;
+  let tangentLength = Math.hypot(tangentX, tangentY, tangentZ);
+
+  if (
+    !Number.isFinite(tangentLength)
+    || tangentLength <= OPERATIONAL_ROUTE_TANGENT_EPSILON
+  ) {
+    const firstPoint = channel.controlPoints[0];
+    const lastPoint = channel.controlPoints[channel.controlPoints.length - 1];
+    tangentX = ((lastPoint?.[0] ?? 0) - (firstPoint?.[0] ?? 0))
+      * directionMultiplier;
+    tangentY = ((lastPoint?.[1] ?? 0) - (firstPoint?.[1] ?? 0))
+      * directionMultiplier;
+    tangentZ = ((lastPoint?.[2] ?? 0) - (firstPoint?.[2] ?? 0))
+      * directionMultiplier;
+    tangentLength = Math.hypot(tangentX, tangentY, tangentZ);
+  }
+  if (
+    !Number.isFinite(tangentLength)
+    || tangentLength <= OPERATIONAL_ROUTE_TANGENT_EPSILON
+  ) {
+    const retainedLength = Math.hypot(target[0], target[1], target[2]);
+    if (
+      Number.isFinite(retainedLength)
+      && retainedLength > OPERATIONAL_ROUTE_TANGENT_EPSILON
+    ) {
+      return;
+    }
+    target[0] = directionMultiplier;
+    target[1] = 0;
+    target[2] = 0;
+    return;
+  }
+  const inverseLength = 1 / tangentLength;
+  target[0] = tangentX * inverseLength;
+  target[1] = tangentY * inverseLength;
+  target[2] = tangentZ * inverseLength;
+};
+
 const createPointField = (maximumPointCount: number): NeuralCorePropagationPointField => {
   return {
     colors: new Float32Array(maximumPointCount * 3),
@@ -108,6 +220,18 @@ const createPointField = (maximumPointCount: number): NeuralCorePropagationPoint
     opacities: new Float32Array(maximumPointCount),
     positions: new Float32Array(maximumPointCount * 3),
     sizes: new Float32Array(maximumPointCount),
+  };
+};
+
+const createOperationalProtagonistMarkerField = (
+): NeuralCoreOperationalProtagonistMarkerField => {
+  return {
+    colors: new Float32Array(3),
+    maximumMarkerCount: 1,
+    opacities: new Float32Array(1),
+    positions: new Float32Array(3),
+    sizes: new Float32Array(1),
+    tangents: new Float32Array(3),
   };
 };
 
@@ -180,6 +304,18 @@ export const createNeuralCorePropagationBufferState = (
     clusterRegions,
     nodeActivationById: new Float32Array(maximumNodeId + 1),
     nodePositionsById,
+    operationalEndpointReactionState: {
+      sourceWeight: 0,
+      targetWeight: 0,
+      red: 0,
+      green: 0,
+      blue: 0,
+    },
+    operationalProtagonistMarkerField: createOperationalProtagonistMarkerField(),
+    operationalRouteNextScratchPoint: [0, 0, 0],
+    operationalRoutePreviousScratchPoint: [0, 0, 0],
+    operationalRouteScratchPoint: [0, 0, 0],
+    operationalRouteTangentScratchPoint: [1, 0, 0],
     packedColorByHex,
     pulseField: createPointField(
       config.runtime.maximumConcurrentTransmissions * config.pulse.trailSampleCount,
@@ -187,6 +323,11 @@ export const createNeuralCorePropagationBufferState = (
     routesBySynapseId,
     synapseFocusLevels: new Uint8Array(topologyVisualState.synapseRoutes.length),
     synapseIndexById,
+    updateResult: {
+      clusterPointCount: 0,
+      operationalProtagonistMarkerCount: 0,
+      pulsePointCount: 0,
+    },
   };
 };
 
@@ -309,6 +450,95 @@ const compileClusterFrameState = (
   }
 };
 
+const smoothBufferValue = (value: number): number => {
+  const amount = clampBufferValue(value);
+  return amount * amount * (3 - 2 * amount);
+};
+
+export const writeOperationalProtagonistMarker = (
+  buffers: NeuralCorePropagationBufferState,
+  pulse: NeuralCorePropagationVisualPulse,
+  channel: NeuralCoreOperationalRouteVisualChannel,
+  routeDirection: "forward" | "backward",
+  routeProgress: number,
+  red: number,
+  green: number,
+  blue: number,
+  pulseComposition: NeuralCoreElementVisualComposition,
+): number => {
+  const field = buffers.operationalProtagonistMarkerField;
+  const protagonistConfig = NEURAL_CORE_OPERATIONAL_PROTAGONIST_MARKER_CONFIG;
+  const markerOpacity = clampBufferValue(Math.max(
+    protagonistConfig.minimumOpacity,
+    pulseComposition.opacity,
+  ));
+  const markerSize = pulse.size
+    * pulseComposition.scale
+    * protagonistConfig.markerScaleMultiplier;
+  writeNeuralCoreOperationalRoutePositionAtProgress(
+    field.positions,
+    0,
+    channel,
+    routeProgress,
+    buffers.operationalRouteScratchPoint,
+  );
+  writeNeuralCoreOperationalRouteTangentAtProgress(
+    buffers.operationalRouteTangentScratchPoint,
+    channel,
+    routeProgress,
+    routeDirection,
+    buffers.operationalRoutePreviousScratchPoint,
+    buffers.operationalRouteNextScratchPoint,
+  );
+  field.tangents[0] = buffers.operationalRouteTangentScratchPoint[0];
+  field.tangents[1] = buffers.operationalRouteTangentScratchPoint[1];
+  field.tangents[2] = buffers.operationalRouteTangentScratchPoint[2];
+  field.colors[0] = red;
+  field.colors[1] = green;
+  field.colors[2] = blue;
+  field.opacities[0] = markerOpacity;
+  field.sizes[0] = markerSize;
+  return 1;
+};
+
+const writeOperationalEndpointReactions = (
+  buffers: NeuralCorePropagationBufferState,
+  channel: NeuralCoreOperationalRouteVisualChannel,
+  progress: number,
+  red: number,
+  green: number,
+  blue: number,
+): void => {
+  const protagonistConfig = NEURAL_CORE_OPERATIONAL_PROTAGONIST_MARKER_CONFIG;
+  const reactionState = buffers.operationalEndpointReactionState;
+  const sourceWeight = 1 - smoothBufferValue(
+    progress / protagonistConfig.sourceReactionProgressFraction,
+  );
+  const destinationStart = 1 - protagonistConfig.destinationReactionProgressFraction;
+  const anticipationWeight = smoothBufferValue(
+    (progress - destinationStart)
+      / protagonistConfig.destinationReactionProgressFraction,
+  );
+  const arrivalStart = 1 - protagonistConfig.arrivalReactionProgressFraction;
+  const arrivalWeight = smoothBufferValue(
+    (progress - arrivalStart) / protagonistConfig.arrivalReactionProgressFraction,
+  );
+  reactionState.sourceClusterId = channel.sourceClusterId;
+  reactionState.sourceWeight = sourceWeight
+    * protagonistConfig.sourceReactionIntensity;
+  reactionState.targetClusterId = channel.targetClusterId;
+  reactionState.targetWeight = anticipationWeight
+    * (
+      protagonistConfig.destinationAnticipationIntensityRatio
+      + arrivalWeight
+        * (1 - protagonistConfig.destinationAnticipationIntensityRatio)
+    )
+    * protagonistConfig.destinationReactionIntensity;
+  reactionState.red = red;
+  reactionState.green = green;
+  reactionState.blue = blue;
+};
+
 export const updateNeuralCorePropagationBuffers = (
   buffers: NeuralCorePropagationBufferState,
   visualState: NeuralCorePropagationVisualState,
@@ -319,16 +549,45 @@ export const updateNeuralCorePropagationBuffers = (
   config: NeuralCorePropagationConfig,
   cameraProfile: NeuralCoreCameraRenderingProfile,
   inspectionVisibility: NeuralCoreInspectionVisibilityState,
-): { clusterPointCount: number; pulsePointCount: number } => {
+  operationalRouteVisualChannel?: NeuralCoreOperationalRouteVisualChannel,
+  operationalTransmissionId?: string,
+): NeuralCorePropagationBufferUpdateResult => {
   compileDirectionFocusLevels(buffers, directionState);
+  buffers.operationalProtagonistMarkerField.opacities[0] = 0;
+  buffers.operationalProtagonistMarkerField.sizes[0] = 0;
+  const operationalEndpointReactionState = buffers.operationalEndpointReactionState;
+  operationalEndpointReactionState.sourceClusterId = undefined;
+  operationalEndpointReactionState.sourceWeight = 0;
+  operationalEndpointReactionState.targetClusterId = undefined;
+  operationalEndpointReactionState.targetWeight = 0;
+  operationalEndpointReactionState.red = 0;
+  operationalEndpointReactionState.green = 0;
+  operationalEndpointReactionState.blue = 0;
   let pulsePointCount = 0;
+  let operationalProtagonistMarkerCount = 0;
+  let operationalProtagonistWritten = false;
+  let operationalProtagonistProgress = -1;
+  let operationalProtagonistRed = 0;
+  let operationalProtagonistGreen = 0;
+  let operationalProtagonistBlue = 0;
   for (const pulse of visualState.pulses) {
+    const isOperationalProtagonist = operationalTransmissionId !== undefined
+      && pulse.transmissionId === operationalTransmissionId;
+    if (isOperationalProtagonist && operationalProtagonistWritten) {
+      continue;
+    }
     const route = buffers.routesBySynapseId[pulse.synapseId];
-    if (!route) {
+    if (!route && !(isOperationalProtagonist && operationalRouteVisualChannel)) {
       continue;
     }
 
-    const packedColor = getPackedColor(buffers.packedColorByHex, pulse.color);
+    const operationalStatus = operationalRouteVisualChannel?.status === "recovering"
+      ? "warning"
+      : operationalRouteVisualChannel?.status;
+    const pulseColor = isOperationalProtagonist && operationalStatus
+      ? NEURAL_CORE_TOPOLOGY_STATUS_COLORS[operationalStatus]
+      : pulse.color;
+    const packedColor = getPackedColor(buffers.packedColorByHex, pulseColor);
     const red = getPackedColorRed(packedColor);
     const green = getPackedColorGreen(packedColor);
     const blue = getPackedColorBlue(packedColor);
@@ -371,7 +630,38 @@ export const updateNeuralCorePropagationBuffers = (
       inspectionVisibility,
     );
     const pulseOpacity = pulseComposition.opacity;
-    const routeProgress = pulse.direction === "forward" ? pulse.progress : 1 - pulse.progress;
+    const routeDirection = isOperationalProtagonist
+      && operationalRouteVisualChannel?.direction !== "bidirectional"
+      && operationalRouteVisualChannel?.direction !== undefined
+      ? operationalRouteVisualChannel.direction
+      : pulse.direction;
+    const routeProgress = routeDirection === "forward"
+      ? pulse.progress
+      : 1 - pulse.progress;
+    if (isOperationalProtagonist && operationalRouteVisualChannel) {
+      const protagonistRed = convertSrgbChannelToLinear(red);
+      const protagonistGreen = convertSrgbChannelToLinear(green);
+      const protagonistBlue = convertSrgbChannelToLinear(blue);
+      operationalProtagonistMarkerCount = writeOperationalProtagonistMarker(
+        buffers,
+        pulse,
+        operationalRouteVisualChannel,
+        routeDirection,
+        routeProgress,
+        protagonistRed,
+        protagonistGreen,
+        protagonistBlue,
+        pulseComposition,
+      );
+      operationalProtagonistWritten = operationalProtagonistMarkerCount > 0;
+      if (operationalProtagonistWritten) {
+        operationalProtagonistProgress = pulse.progress;
+        operationalProtagonistRed = protagonistRed;
+        operationalProtagonistGreen = protagonistGreen;
+        operationalProtagonistBlue = protagonistBlue;
+      }
+      continue;
+    }
     for (
       let trailIndex = 0;
       trailIndex < pulseTrailPointCount
@@ -383,7 +673,7 @@ export const updateNeuralCorePropagationBuffers = (
         : trailIndex / (pulseTrailPointCount - 1);
       const smoothTrailFraction = trailFraction * (1.35 - trailFraction * 0.35);
       const trailOffset = pulse.trailLength * smoothTrailFraction;
-      const pointProgress = pulse.direction === "forward"
+      const pointProgress = routeDirection === "forward"
         ? routeProgress - trailOffset
         : routeProgress + trailOffset;
       const isHead = trailIndex === 0;
@@ -395,12 +685,14 @@ export const updateNeuralCorePropagationBuffers = (
         * pulseComposition.scale
         * (isHead ? config.pulse.headScale : 1 - trailFraction * 0.54);
       const brightness = isHead ? config.pulse.headBrightness : 1;
-      writeNeuralCoreRoutePositionAtProgress(
-        buffers.pulseField.positions,
-        pulsePointCount,
-        route,
-        pointProgress,
-      );
+      if (route) {
+        writeNeuralCoreRoutePositionAtProgress(
+          buffers.pulseField.positions,
+          pulsePointCount,
+          route,
+          pointProgress,
+        );
+      }
       writePointAppearance(
         buffers.pulseField,
         pulsePointCount,
@@ -415,6 +707,19 @@ export const updateNeuralCorePropagationBuffers = (
   }
 
   compileClusterFrameState(buffers, visualState);
+  if (
+    operationalRouteVisualChannel
+    && operationalProtagonistProgress >= 0
+  ) {
+    writeOperationalEndpointReactions(
+      buffers,
+      operationalRouteVisualChannel,
+      operationalProtagonistProgress,
+      operationalProtagonistRed,
+      operationalProtagonistGreen,
+      operationalProtagonistBlue,
+    );
+  }
   let clusterPointCount = 0;
   buffers.clusterRegions.forEach((region, clusterIndex): void => {
     const intensity = buffers.clusterActivationIntensities[clusterIndex];
@@ -499,7 +804,11 @@ export const updateNeuralCorePropagationBuffers = (
     }
   });
 
-  return { clusterPointCount, pulsePointCount };
+  buffers.updateResult.clusterPointCount = clusterPointCount;
+  buffers.updateResult.operationalProtagonistMarkerCount =
+    operationalProtagonistMarkerCount;
+  buffers.updateResult.pulsePointCount = pulsePointCount;
+  return buffers.updateResult;
 };
 
 export const createNeuralCorePropagationBufferDimensionsKey = (

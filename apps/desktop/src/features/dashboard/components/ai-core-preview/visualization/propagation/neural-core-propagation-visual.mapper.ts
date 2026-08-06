@@ -73,6 +73,7 @@ const createIndexRecord = (): Record<string, number> => {
 };
 
 const createPulse = (): NeuralCorePropagationVisualPulse => ({
+  transmissionId: "",
   synapseId: "",
   progress: 0,
   intensity: 0,
@@ -384,6 +385,7 @@ const compileVisiblePropagations = (
     const intensity = clampPropagationValue(
       propagation.intensity * config.pulse.intensityMultiplier * (1 + destinationBoost * 0.3),
     );
+    pulse.transmissionId = propagation.transmissionId;
     pulse.synapseId = propagation.synapseId;
     pulse.progress = propagation.progress;
     pulse.intensity = intensity;

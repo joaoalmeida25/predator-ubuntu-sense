@@ -81,6 +81,7 @@ export interface NeuralCoreSemanticFocusLensConfigInput {
 export interface MapNeuralCoreSemanticFocusLensStateParams {
   interactionMode: NeuralCoreInteractionMode;
   selectedClusterId?: string;
+  runtimeFocusedClusterId?: string;
   cameraDistanceToSelected?: number;
   cameraDistanceToBrain: number;
   densityWeights: NeuralCoreVisualDensityWeights;
@@ -90,6 +91,7 @@ export interface MapNeuralCoreSemanticFocusLensStateParams {
 export interface WriteNeuralCoreSemanticFocusLensTargetParams {
   interactionMode: NeuralCoreInteractionMode;
   selectedClusterId?: string;
+  runtimeFocusedClusterId?: string;
   cameraDistanceToSelected?: number;
   cameraDistanceToBrain: number;
   densityWeights: NeuralCoreVisualDensityWeights;

@@ -31,6 +31,9 @@ import {
   updateNeuralCorePropagationBuffers,
 } from "../../visualization/propagation/neural-core-propagation-buffer.utils";
 import type { NeuralCorePropagationVisualState } from "../../visualization/propagation/neural-core-propagation-visual.types";
+import type {
+  NeuralCoreOperationalEndpointReactionState,
+} from "../../visualization/propagation/neural-core-propagation-buffer.types";
 import { useNeuralCorePropagation } from "../../hooks/use-neural-core-propagation/use-neural-core-propagation.hook";
 import { createNeuralCoreGraph } from "../../visualization/graph/neural-core-graph.utils";
 import { mapNeuralCoreTopologyToVisualState } from "../../visualization/topology/neural-core-topology-visual.mapper";
@@ -102,9 +105,13 @@ import {
   updateNeuralCoreAggregatedRouteRenderField,
 } from "../../visualization/cluster-grammar/neural-core-cluster-grammar-render.mapper";
 import type {
+  NeuralCoreAggregatedRoute,
   NeuralCoreClusterGrammarDensity,
   NeuralCoreClusterGrammarFocus,
 } from "../../visualization/cluster-grammar/neural-core-cluster-grammar.types";
+import {
+  mapNeuralCoreAggregatedRoutes,
+} from "../../visualization/cluster-grammar/neural-core-aggregated-route.mapper";
 import {
   NeuralCoreClusterTerritoriesView,
 } from "../neural-core-cluster-territories/neural-core-cluster-territories-view.component";
@@ -121,8 +128,36 @@ import {
 import type {
   WriteNeuralCoreSemanticFocusLensTargetParams,
 } from "../../visualization/focus-lens/neural-core-semantic-focus-lens.types";
+import {
+  NEURAL_CORE_TOPOLOGY_STATUS_COLORS,
+} from "../../visualization/topology/neural-core-topology-visual.constants";
+import {
+  mapOperationalRouteEventToVisualChannel,
+} from "../../demos/operational/mappers/neural-core-operational-route-visual-channel.mapper";
+import {
+  mapOperationalVisualChannelToPropagation,
+} from "../../demos/operational/mappers/neural-core-operational-propagation.mapper";
+import {
+  NEURAL_CORE_OPERATIONAL_PROTAGONIST_MARKER_CONFIG,
+} from "../../visualization/propagation/neural-core-operational-protagonist-marker.constants";
 
 const EMPTY_NEURAL_CORE_CLUSTER_IDS: readonly string[] = [];
+const EMPTY_NEURAL_CORE_AGGREGATED_ROUTES: readonly NeuralCoreAggregatedRoute[] = [];
+const EMPTY_NEURAL_CORE_ROUTE_INDEX_BY_SYNAPSE_ID: Readonly<
+  Record<string, number>
+> = {};
+
+const createOperationalRouteIndexBySynapseId = (
+  routes: readonly NeuralCoreAggregatedRoute[],
+): Readonly<Record<string, number>> => {
+  const routeIndexBySynapseId: Record<string, number> = {};
+  routes.forEach((route, routeIndex): void => {
+    for (const synapseId of route.synapseIds) {
+      routeIndexBySynapseId[synapseId] = routeIndex;
+    }
+  });
+  return routeIndexBySynapseId;
+};
 
 interface NeuralCoreSceneMotionRuntime {
   particleTime: number;
@@ -480,6 +515,7 @@ const updateClusterTerritoryVisuals = (
     hubScale: number;
     activityIntensity: number;
   }[],
+  endpointReaction: NeuralCoreOperationalEndpointReactionState,
   elapsedSeconds: number,
 ): void => {
   territoryRefs.forEach((territoryRef, index): void => {
@@ -488,21 +524,56 @@ const updateClusterTerritoryVisuals = (
     if (!group || !state) {
       return;
     }
+    const clusterId = typeof group.userData.clusterId === "string"
+      ? group.userData.clusterId
+      : undefined;
+    const sourceReactionWeight = clusterId === endpointReaction.sourceClusterId
+      ? endpointReaction.sourceWeight
+      : 0;
+    const targetReactionWeight = clusterId === endpointReaction.targetClusterId
+      ? endpointReaction.targetWeight
+      : 0;
+    const endpointReactionWeight = Math.max(
+      sourceReactionWeight,
+      targetReactionWeight,
+    );
+    const activityIntensity = Math.max(
+      state.activityIntensity,
+      endpointReactionWeight,
+    );
     group.scale.setScalar(state.territoryScale);
     const boundary = group.children[0] as Mesh | undefined;
     const boundaryMaterial = boundary?.material as ShaderMaterial | undefined;
     if (boundaryMaterial?.uniforms.uOpacity) {
-      boundaryMaterial.uniforms.uOpacity.value = state.boundaryOpacity
-        * state.territoryOpacity;
+      boundaryMaterial.uniforms.uOpacity.value = Math.min(
+        1,
+        state.boundaryOpacity * state.territoryOpacity
+          + endpointReactionWeight * 0.035,
+      );
+    }
+    const boundaryColor = boundaryMaterial?.uniforms.uColor?.value;
+    const boundarySemanticColor = boundaryMaterial?.userData.semanticColor;
+    if (boundaryColor instanceof Color && boundarySemanticColor instanceof Color) {
+      const reactionColorWeight = endpointReactionWeight * 0.14;
+      boundaryColor.setRGB(
+        boundarySemanticColor.r
+          + (endpointReaction.red - boundarySemanticColor.r) * reactionColorWeight,
+        boundarySemanticColor.g
+          + (endpointReaction.green - boundarySemanticColor.g) * reactionColorWeight,
+        boundarySemanticColor.b
+          + (endpointReaction.blue - boundarySemanticColor.b) * reactionColorWeight,
+      );
     }
     const hub = group.children[1] as Group | undefined;
     if (!hub) {
       return;
     }
-    const pulse = 1 + Math.sin(elapsedSeconds * (0.72 + state.activityIntensity * 0.5) + index)
-      * 0.025 * state.activityIntensity;
-    hub.scale.setScalar(state.hubScale * pulse);
-    hub.rotation.z = elapsedSeconds * 0.08 * (0.4 + state.activityIntensity);
+    const pulse = 1 + Math.sin(elapsedSeconds * (0.72 + activityIntensity * 0.5) + index)
+      * 0.025 * activityIntensity;
+    hub.scale.setScalar(
+      state.hubScale * pulse * (1 + endpointReactionWeight * 0.1),
+    );
+    hub.rotation.z = elapsedSeconds * 0.08 * (0.4 + activityIntensity);
     for (const child of hub.children) {
       const mesh = child as Mesh;
       const material = mesh.material as MeshBasicMaterial;
@@ -510,7 +581,26 @@ const updateClusterTerritoryVisuals = (
       const roleOpacity = role === "hub-ring"
         ? 0.34
         : role === "hub-filaments" ? 0.2 : 0.82;
-      material.opacity = state.hubOpacity * state.territoryOpacity * roleOpacity;
+      const reactionOpacity = role === "hub-core"
+        ? 0.42
+        : role === "hub-filaments" ? 0.18 : 0.24;
+      material.opacity = Math.min(
+        1,
+        state.hubOpacity * state.territoryOpacity * roleOpacity
+          + endpointReactionWeight * reactionOpacity,
+      );
+      const semanticColor = material.userData.semanticColor;
+      if (semanticColor instanceof Color) {
+        const reactionColorWeight = endpointReactionWeight * 0.72;
+        material.color.setRGB(
+          semanticColor.r
+            + (endpointReaction.red - semanticColor.r) * reactionColorWeight,
+          semanticColor.g
+            + (endpointReaction.green - semanticColor.g) * reactionColorWeight,
+          semanticColor.b
+            + (endpointReaction.blue - semanticColor.b) * reactionColorWeight,
+        );
+      }
     }
   });
 };
@@ -546,6 +636,12 @@ export const NeuralCoreScene = ({
   onNarrativeStateChange,
   onPropagationEvent,
   runtimeScenarioKey,
+  runtimePlaybackStatus,
+  runtimePlaybackPaused = false,
+  runtimeFocusedClusterId,
+  operationalVisualOverlay,
+  operationalPropagationInput,
+  operationalRouteProgressRef,
   cameraResetRevision,
   inspectionConfig,
   inspectionFocus,
@@ -567,6 +663,7 @@ export const NeuralCoreScene = ({
   const aggregatedPulsePositionRef = useRef<BufferAttribute | null>(null);
   const aggregatedPulseSizeRef = useRef<BufferAttribute | null>(null);
   const aggregatedRouteOpacityRef = useRef<BufferAttribute | null>(null);
+  const aggregatedRouteColorRef = useRef<BufferAttribute | null>(null);
   const aggregatedRouteThicknessRef = useRef<BufferAttribute | null>(null);
   const clusterGrammarRibbonOpacityRef = useRef<BufferAttribute | null>(null);
   const connectionRef = useRef<Group | null>(null);
@@ -586,6 +683,13 @@ export const NeuralCoreScene = ({
   const propagationPulsePositionRef = useRef<BufferAttribute | null>(null);
   const propagationPulseOpacityRef = useRef<BufferAttribute | null>(null);
   const propagationPulseSizeRef = useRef<BufferAttribute | null>(null);
+  const operationalProtagonistMarkerColorRef = useRef<BufferAttribute | null>(null);
+  const operationalProtagonistMarkerGeometryRef = useRef<BufferGeometry | null>(null);
+  const operationalProtagonistMarkerMaterialRef = useRef<ShaderMaterial | null>(null);
+  const operationalProtagonistMarkerOpacityRef = useRef<BufferAttribute | null>(null);
+  const operationalProtagonistMarkerPositionRef = useRef<BufferAttribute | null>(null);
+  const operationalProtagonistMarkerSizeRef = useRef<BufferAttribute | null>(null);
+  const operationalProtagonistMarkerTangentRef = useRef<BufferAttribute | null>(null);
   const pulseColorRef = useRef<BufferAttribute | null>(null);
   const pulsePositionRef = useRef<BufferAttribute | null>(null);
   const ringRef = useRef<Group | null>(null);
@@ -599,14 +703,42 @@ export const NeuralCoreScene = ({
   const semanticRibbonPulseIntensityRef = useRef<BufferAttribute | null>(null);
   const semanticRibbonThicknessRef = useRef<BufferAttribute | null>(null);
   const semanticBufferStateRef = useRef<NeuralCoreSemanticBufferState | undefined>(undefined);
-  const visualDensityRuntimeRef = useRef(createNeuralCoreVisualDensityRuntime());
-  const cameraRenderingProfileRef = useRef(createNeuralCoreCameraRenderingProfile());
+  const initialVisualDensityRuntime = useMemo(
+    () => createNeuralCoreVisualDensityRuntime(),
+    [],
+  );
+  const initialCameraRenderingProfile = useMemo(
+    () => createNeuralCoreCameraRenderingProfile(),
+    [],
+  );
+  const visualDensityRuntimeRef = useRef(initialVisualDensityRuntime);
+  const cameraRenderingProfileRef = useRef(initialCameraRenderingProfile);
   const spatialMapRuntimeRef = useRef<NeuralCoreSpatialMap | undefined>(undefined);
   const choreographyLoopRuntimeRef = useRef<NeuralCoreSceneChoreographyLoopRuntime>({
     timelineSeconds: 0,
   });
   const narrativePhaseKeyRef = useRef("");
   const simulationElapsedSecondsRef = useRef(0);
+  const runtimeVisualElapsedSecondsRef = useRef(0);
+  const aggregatedPulseSuppressionRef = useRef(1);
+  const operationalRouteOpacityMultiplierRef = useRef(1);
+  const operationalRouteThicknessMultiplierRef = useRef(1);
+  const operationalRouteRenderIndexRef = useRef<number | undefined>(undefined);
+  const previousRuntimePlaybackStatusRef = useRef(runtimePlaybackStatus);
+  if (previousRuntimePlaybackStatusRef.current !== runtimePlaybackStatus) {
+    const previousRuntimeStatus = previousRuntimePlaybackStatusRef.current;
+    previousRuntimePlaybackStatusRef.current = runtimePlaybackStatus;
+    if (
+      runtimePlaybackStatus === "running"
+      && (
+        previousRuntimeStatus === undefined
+        || previousRuntimeStatus === "idle"
+        || previousRuntimeStatus === "completed"
+      )
+    ) {
+      runtimeVisualElapsedSecondsRef.current = 0;
+    }
+  }
   const motionRuntimeRef = useRef<NeuralCoreSceneMotionRuntime>({
     particleTime: 0,
     rotationSpeed: 0,
@@ -677,18 +809,7 @@ export const NeuralCoreScene = ({
   }, [semanticFocusLensConfig]);
   const haloTargetColor = useMemo(() => new Color("#82efff"), []);
   const graph = useMemo(() => createNeuralCoreGraph(), []);
-  const propagation = useNeuralCorePropagation({
-    topology,
-    config: propagationConfig,
-    onPropagationEvent,
-    resetKey: runtimeScenarioKey,
-  });
-  const choreographyRuntime = useNeuralCoreChoreography({
-    choreography,
-    config: semanticVisualizationConfig,
-    resetKey: runtimeScenarioKey,
-  });
-  const spatialTopology = propagation.plan?.topology ?? EMPTY_NEURAL_CORE_TOPOLOGY;
+  const spatialTopology = topology ?? EMPTY_NEURAL_CORE_TOPOLOGY;
   const spatialIdentityKey = useMemo(() => {
     return createNeuralCoreSpatialIdentityKey(
       spatialTopology,
@@ -709,12 +830,12 @@ export const NeuralCoreScene = ({
   }, [resolvedSpatialMap]);
   const topologyVisualState = useMemo(() => {
     return mapNeuralCoreTopologyToVisualState({
-      topology: propagation.plan?.topology,
+      topology: spatialTopology,
       graph,
       config: semanticVisualizationConfig.topology,
       spatialMap: resolvedSpatialMap,
     });
-  }, [graph, propagation.plan, resolvedSpatialMap, semanticVisualizationConfig.topology]);
+  }, [graph, resolvedSpatialMap, semanticVisualizationConfig.topology, spatialTopology]);
   const clusterGrammar = useMemo(() => {
     return mapNeuralCoreClusterGrammar({
       config: clusterGrammarConfig,
@@ -723,12 +844,98 @@ export const NeuralCoreScene = ({
       topologyVisualState,
     });
   }, [clusterGrammarConfig, graph, spatialTopology, topologyVisualState]);
+  const operationalFallbackRoutes = useMemo(() => {
+    return clusterGrammar.enabled
+      ? EMPTY_NEURAL_CORE_AGGREGATED_ROUTES
+      : mapNeuralCoreAggregatedRoutes(spatialTopology, topologyVisualState);
+  }, [clusterGrammar.enabled, spatialTopology, topologyVisualState]);
+  const operationalFallbackRouteIndexBySynapseId = useMemo(() => {
+    return operationalFallbackRoutes.length > 0
+      ? createOperationalRouteIndexBySynapseId(operationalFallbackRoutes)
+      : EMPTY_NEURAL_CORE_ROUTE_INDEX_BY_SYNAPSE_ID;
+  }, [operationalFallbackRoutes]);
+  const operationalAggregatedRoutes = clusterGrammar.enabled
+    ? clusterGrammar.routes
+    : operationalFallbackRoutes;
+  const operationalRouteIndexBySynapseId = clusterGrammar.enabled
+    ? clusterGrammar.lookups.routeIndexBySynapseId
+    : operationalFallbackRouteIndexBySynapseId;
+  const operationalRouteVisualChannel = useMemo(() => {
+    if (!operationalPropagationInput) {
+      return undefined;
+    }
+    return mapOperationalRouteEventToVisualChannel({
+      request: operationalPropagationInput,
+      aggregatedRoutes: operationalAggregatedRoutes,
+      routeIndexBySynapseId: operationalRouteIndexBySynapseId,
+      visualMode: "aggregated",
+    });
+  }, [
+    operationalAggregatedRoutes,
+    operationalPropagationInput,
+    operationalRouteIndexBySynapseId,
+  ]);
+  const resolvedOperationalPropagationInput = useMemo(() => (
+    operationalPropagationInput && operationalRouteVisualChannel
+      ? mapOperationalVisualChannelToPropagation({
+        channel: operationalRouteVisualChannel,
+        request: operationalPropagationInput,
+      })
+      : undefined
+  ), [operationalPropagationInput, operationalRouteVisualChannel]);
+  const operationalTransmissionId = resolvedOperationalPropagationInput?.transmission.id;
+  const operationalTransmissionActive = operationalRouteVisualChannel !== undefined
+    && operationalTransmissionId !== undefined;
+  const propagation = useNeuralCorePropagation({
+    topology,
+    config: propagationConfig,
+    externalTransmission: resolvedOperationalPropagationInput?.transmission,
+    externalProgressRef: operationalRouteProgressRef,
+    onPropagationEvent,
+    resetKey: runtimeScenarioKey,
+  });
+  const choreographyRuntime = useNeuralCoreChoreography({
+    choreography,
+    config: semanticVisualizationConfig,
+    resetKey: runtimeScenarioKey,
+  });
   const clusterGrammarRuntime = useMemo(() => {
     return createNeuralCoreClusterGrammarRuntime(clusterGrammar, clusterGrammarConfig);
   }, [clusterGrammar, clusterGrammarConfig]);
   const clusterTerritoryRefs = useMemo(() => {
     return clusterGrammar.territories.map(() => createRef<Group>());
   }, [clusterGrammar.territories]);
+  useEffect(() => {
+    clusterGrammar.territories.forEach((territory, index): void => {
+      const group = clusterTerritoryRefs[index]?.current;
+      if (!group) {
+        return;
+      }
+      const status = operationalVisualOverlay?.clusterStateById[territory.clusterId]?.status;
+      const color = status && status !== "idle"
+        ? NEURAL_CORE_TOPOLOGY_STATUS_COLORS[status]
+        : territory.color;
+      const boundary = group.children[0] as Mesh | Points | undefined;
+      const boundaryMaterial = boundary?.material as ShaderMaterial | undefined;
+      const boundaryColor = boundaryMaterial?.uniforms.uColor?.value;
+      if (boundaryColor instanceof Color) {
+        boundaryColor.set(color);
+      }
+      const boundarySemanticColor = boundaryMaterial?.userData.semanticColor;
+      if (boundarySemanticColor instanceof Color) {
+        boundarySemanticColor.set(color);
+      }
+      const hub = group.children[1] as Group | undefined;
+      for (const child of hub?.children ?? []) {
+        const material = (child as Mesh).material as MeshBasicMaterial | undefined;
+        material?.color?.set(color);
+        const semanticColor = material?.userData.semanticColor;
+        if (semanticColor instanceof Color) {
+          semanticColor.set(color);
+        }
+      }
+    });
+  }, [clusterGrammar.territories, clusterTerritoryRefs, operationalVisualOverlay]);
   const networkFogDepth = useMemo(() => {
     let maximumDepth = 1.8;
     for (const region of topologyVisualState.clusterRegions) {
@@ -779,6 +986,7 @@ export const NeuralCoreScene = ({
     spatialMap: resolvedSpatialMap,
     topology: spatialTopology,
     topologyVisualState,
+    operationalOverlay: operationalVisualOverlay,
   });
   const directionRuntime = useNeuralCoreSceneDirection({
     timeline: sceneDirection,
@@ -800,6 +1008,66 @@ export const NeuralCoreScene = ({
       propagation.config,
     );
   }, [bufferDimensionsKey, graph, topologyVisualState]);
+  useEffect(() => {
+    const field = propagationBuffers.operationalProtagonistMarkerField;
+    field.positions.fill(0);
+    field.tangents.fill(0);
+    field.colors.fill(0);
+    field.opacities.fill(0);
+    field.sizes.fill(0);
+    const endpointReaction = propagationBuffers.operationalEndpointReactionState;
+    endpointReaction.sourceClusterId = undefined;
+    endpointReaction.sourceWeight = 0;
+    endpointReaction.targetClusterId = undefined;
+    endpointReaction.targetWeight = 0;
+    endpointReaction.red = 0;
+    endpointReaction.green = 0;
+    endpointReaction.blue = 0;
+    operationalProtagonistMarkerGeometryRef.current?.setDrawRange(0, 0);
+    markAttributeForUpdate(operationalProtagonistMarkerPositionRef.current);
+    markAttributeForUpdate(operationalProtagonistMarkerTangentRef.current);
+    markAttributeForUpdate(operationalProtagonistMarkerColorRef.current);
+    markAttributeForUpdate(operationalProtagonistMarkerOpacityRef.current);
+    markAttributeForUpdate(operationalProtagonistMarkerSizeRef.current);
+    return (): void => {
+      field.positions.fill(0);
+      field.tangents.fill(0);
+      field.colors.fill(0);
+      field.opacities.fill(0);
+      field.sizes.fill(0);
+      endpointReaction.sourceClusterId = undefined;
+      endpointReaction.sourceWeight = 0;
+      endpointReaction.targetClusterId = undefined;
+      endpointReaction.targetWeight = 0;
+      endpointReaction.red = 0;
+      endpointReaction.green = 0;
+      endpointReaction.blue = 0;
+      operationalProtagonistMarkerGeometryRef.current?.setDrawRange(0, 0);
+    };
+  }, [operationalTransmissionId, propagationBuffers, runtimeScenarioKey]);
+  useEffect(() => {
+    aggregatedPulseSuppressionRef.current = 1;
+    operationalRouteOpacityMultiplierRef.current = 1;
+    operationalRouteThicknessMultiplierRef.current = 1;
+    operationalRouteRenderIndexRef.current = undefined;
+    const opacityUniform = ambientPulseMaterialRef.current?.uniforms.uOpacity;
+    if (opacityUniform) {
+      opacityUniform.value = graph.pulseField.opacity;
+    }
+  }, [clusterGrammar, graph.pulseField.opacity, runtimeScenarioKey]);
+  useEffect(() => {
+    return (): void => {
+      aggregatedPulseSuppressionRef.current = 1;
+      operationalRouteOpacityMultiplierRef.current = 1;
+      operationalRouteThicknessMultiplierRef.current = 1;
+      operationalRouteRenderIndexRef.current = undefined;
+      const opacityUniform = ambientPulseMaterialRef.current?.uniforms.uOpacity;
+      if (opacityUniform) {
+        opacityUniform.value = graph.pulseField.opacity;
+      }
+      operationalProtagonistMarkerGeometryRef.current?.setDrawRange(0, 0);
+    };
+  }, [graph.pulseField.opacity]);
   const semanticBufferDimensionsKey = createNeuralCoreSemanticBufferDimensionsKey(
     semanticVisualizationConfig,
   );
@@ -841,6 +1109,56 @@ export const NeuralCoreScene = ({
   const aggregatedPulseField = useMemo(() => {
     return createNeuralCoreAggregatedPulseField(clusterGrammar);
   }, [clusterGrammar]);
+  const aggregatedOperationalRouteColors = useMemo(() => (
+    clusterGrammar.routes.map((route) => new Color(route.color))
+  ), [clusterGrammar.routes]);
+  useEffect(() => {
+    for (let routeIndex = 0; routeIndex < clusterGrammar.routes.length; routeIndex += 1) {
+      const route = clusterGrammar.routes[routeIndex];
+      let status = route.status;
+      for (const synapseId of route.synapseIds) {
+        const operationalStatus = operationalVisualOverlay?.routeStatusById[synapseId];
+        if (operationalStatus !== undefined) {
+          status = operationalStatus;
+          break;
+        }
+      }
+      if (route.id === operationalRouteVisualChannel?.geometryId) {
+        status = operationalRouteVisualChannel.status === "recovering"
+          ? "warning"
+          : operationalRouteVisualChannel.status;
+      }
+      const color = aggregatedOperationalRouteColors[routeIndex];
+      color.set(status && status !== "idle"
+        ? NEURAL_CORE_TOPOLOGY_STATUS_COLORS[status]
+        : route.color);
+      const routeColorOffset = routeIndex * 3;
+      aggregatedPulseField.routeColors[routeColorOffset] = color.r;
+      aggregatedPulseField.routeColors[routeColorOffset + 1] = color.g;
+      aggregatedPulseField.routeColors[routeColorOffset + 2] = color.b;
+    }
+    for (
+      let vertexIndex = 0;
+      vertexIndex < aggregatedRouteField.routeIndices.length;
+      vertexIndex += 1
+    ) {
+      const color = aggregatedOperationalRouteColors[
+        aggregatedRouteField.routeIndices[vertexIndex]
+      ];
+      const colorOffset = vertexIndex * 3;
+      aggregatedRouteField.colors[colorOffset] = color.r;
+      aggregatedRouteField.colors[colorOffset + 1] = color.g;
+      aggregatedRouteField.colors[colorOffset + 2] = color.b;
+    }
+    markAttributeForUpdate(aggregatedRouteColorRef.current);
+  }, [
+    aggregatedOperationalRouteColors,
+    aggregatedPulseField,
+    aggregatedRouteField,
+    clusterGrammar.routes,
+    operationalRouteVisualChannel,
+    operationalVisualOverlay,
+  ]);
   useEffect(() => {
     semanticBufferStateRef.current = semanticBuffers;
   }, [semanticBuffers]);
@@ -1093,19 +1411,31 @@ export const NeuralCoreScene = ({
       safeDeltaSeconds,
       inspectionState.isPaused,
     );
+    const runtimeDeltaSeconds = runtimePlaybackStatus === undefined
+      || (!runtimePlaybackPaused && (
+        runtimePlaybackStatus === "running"
+        || runtimePlaybackStatus === "failed"
+        || runtimePlaybackStatus === "recovering"
+      ))
+      ? simulationDeltaSeconds
+      : 0;
     simulationElapsedSecondsRef.current += simulationDeltaSeconds;
     const elapsedTime = simulationElapsedSecondsRef.current;
-    const propagationVisualState = propagation.advance(simulationDeltaSeconds);
+    runtimeVisualElapsedSecondsRef.current += runtimeDeltaSeconds;
+    const propagationElapsedTime = runtimePlaybackStatus === undefined
+      ? elapsedTime
+      : runtimeVisualElapsedSecondsRef.current;
+    const propagationVisualState = propagation.advance(runtimeDeltaSeconds);
     const choreographyEvaluation = choreographyRuntime.advance(simulationDeltaSeconds);
     const directionState = directionRuntime.advance(
-      inspectionState.mode === "presentation" ? simulationDeltaSeconds : 0,
+      inspectionState.mode === "presentation" ? runtimeDeltaSeconds : 0,
     );
     const effectiveDirectionState = inspectionState.mode === "inspection"
       && inspectionFocus.selectedClusterId !== undefined
       ? inspectionDirectionState
       : directionState;
     const narrativeState = narrativeRuntime.advance(
-      simulationDeltaSeconds,
+      runtimeDeltaSeconds,
       choreography ? choreographyEvaluation.timelineSeconds : undefined,
     );
     const narrativeVisualState = mapNeuralCoreNarrativeToVisualState(narrativeState);
@@ -1173,6 +1503,7 @@ export const NeuralCoreScene = ({
     const focusLensParams = focusLensParamsRef.current;
     focusLensParams.interactionMode = inspectionState.mode;
     focusLensParams.selectedClusterId = inspectionFocus.selectedClusterId;
+    focusLensParams.runtimeFocusedClusterId = runtimeFocusedClusterId;
     focusLensParams.cameraDistanceToSelected = inspectionFocus.selectedClusterId
       ? relevantCameraDistance
       : undefined;
@@ -1188,6 +1519,65 @@ export const NeuralCoreScene = ({
       semanticFocusLensConfig,
       safeDeltaSeconds,
     );
+    aggregatedPulseSuppressionRef.current = dampNeuralCoreSceneDirectionValue(
+      aggregatedPulseSuppressionRef.current,
+      operationalTransmissionActive
+        ? NEURAL_CORE_OPERATIONAL_PROTAGONIST_MARKER_CONFIG
+          .backgroundAggregatedPulseMultiplier
+        : 1,
+      operationalTransmissionActive
+        ? semanticVisualizationConfig.transition.activationResponse
+        : semanticVisualizationConfig.transition.releaseResponse,
+      safeDeltaSeconds,
+    );
+    const activeOperationalRouteIndex = operationalTransmissionActive
+      && operationalRouteVisualChannel
+      ? clusterGrammar.lookups.routeIndexById[
+        operationalRouteVisualChannel.geometryId
+      ]
+      : undefined;
+    if (activeOperationalRouteIndex !== undefined) {
+      operationalRouteRenderIndexRef.current = activeOperationalRouteIndex;
+    }
+    operationalRouteOpacityMultiplierRef.current =
+      dampNeuralCoreSceneDirectionValue(
+        operationalRouteOpacityMultiplierRef.current,
+        operationalTransmissionActive
+          ? NEURAL_CORE_OPERATIONAL_PROTAGONIST_MARKER_CONFIG
+            .activeRouteOpacityMultiplier
+          : 1,
+        operationalTransmissionActive
+          ? semanticVisualizationConfig.transition.activationResponse
+          : semanticVisualizationConfig.transition.releaseResponse,
+        safeDeltaSeconds,
+      );
+    operationalRouteThicknessMultiplierRef.current =
+      dampNeuralCoreSceneDirectionValue(
+        operationalRouteThicknessMultiplierRef.current,
+        operationalTransmissionActive
+          ? NEURAL_CORE_OPERATIONAL_PROTAGONIST_MARKER_CONFIG
+            .activeRouteThicknessMultiplier
+          : 1,
+        operationalTransmissionActive
+          ? semanticVisualizationConfig.transition.activationResponse
+          : semanticVisualizationConfig.transition.releaseResponse,
+        safeDeltaSeconds,
+      );
+    if (
+      !operationalTransmissionActive
+      && operationalRouteOpacityMultiplierRef.current >= 0.999
+      && operationalRouteThicknessMultiplierRef.current >= 0.999
+    ) {
+      operationalRouteRenderIndexRef.current = undefined;
+    }
+    const markerViewportUniform = operationalProtagonistMarkerMaterialRef.current
+      ?.uniforms.uViewport?.value;
+    if (markerViewportUniform instanceof Vector2) {
+      markerViewportUniform.set(
+        size.width * viewport.dpr,
+        size.height * viewport.dpr,
+      );
+    }
     if (clusterGrammar.enabled) {
       const grammarFocus = clusterGrammarFocusRef.current;
       grammarFocus.selectedClusterId = focusLensRuntime.enabled
@@ -1216,6 +1606,8 @@ export const NeuralCoreScene = ({
         focusLensRuntime,
         semanticFocusLensConfig,
         safeDeltaSeconds,
+        operationalVisualOverlay,
+        operationalRouteVisualChannel,
       );
       updateNeuralCoreClusterGrammarBuffers(
         clusterGrammarBuffers,
@@ -1228,12 +1620,19 @@ export const NeuralCoreScene = ({
       updateNeuralCoreAggregatedRouteRenderField(
         aggregatedRouteField,
         clusterGrammarRuntime,
+        operationalRouteRenderIndexRef.current,
+        operationalRouteOpacityMultiplierRef.current,
+        operationalRouteThicknessMultiplierRef.current,
       );
       const aggregatedPulsePointCount = updateNeuralCoreAggregatedPulseField(
         aggregatedPulseField,
         clusterGrammar,
         clusterGrammarRuntime,
-        elapsedTime,
+        propagationElapsedTime,
+        operationalTransmissionActive
+          ? operationalRouteVisualChannel?.geometryId
+          : undefined,
+        aggregatedPulseSuppressionRef.current,
       );
       aggregatedPulseGeometryRef.current?.setDrawRange(0, aggregatedPulsePointCount);
       markAttributeForUpdate(aggregatedRouteOpacityRef.current);
@@ -1249,11 +1648,6 @@ export const NeuralCoreScene = ({
         markAttributeForUpdate(attributeRef.current);
       }
       markAttributeForUpdate(clusterGrammarRibbonOpacityRef.current);
-      updateClusterTerritoryVisuals(
-        clusterTerritoryRefs,
-        clusterGrammarRuntime.clusterStates,
-        elapsedTime,
-      );
     }
     const inspectionRoot = inspectionRootRef.current;
     if (inspectionRoot) {
@@ -1360,10 +1754,15 @@ export const NeuralCoreScene = ({
         propagationVisualState,
         choreographyEvaluation,
         semanticVisualizationConfig,
+        operationalVisualOverlay,
       )
       : EMPTY_NEURAL_CORE_SEMANTIC_VISUAL_STATE;
 
-    const { clusterPointCount, pulsePointCount } = updateNeuralCorePropagationBuffers(
+    const {
+      clusterPointCount,
+      operationalProtagonistMarkerCount,
+      pulsePointCount,
+    } = updateNeuralCorePropagationBuffers(
       propagationBuffers,
       propagationVisualState,
       topologyVisualState,
@@ -1373,7 +1772,17 @@ export const NeuralCoreScene = ({
       propagation.config,
       cameraProfile,
       inspectionVisibility,
+      operationalRouteVisualChannel,
+      operationalTransmissionId,
     );
+    if (clusterGrammar.enabled) {
+      updateClusterTerritoryVisuals(
+        clusterTerritoryRefs,
+        clusterGrammarRuntime.clusterStates,
+        propagationBuffers.operationalEndpointReactionState,
+        propagationElapsedTime,
+      );
+    }
     if (clusterGrammar.enabled) {
       const detailedPulseWeight = focusLensRuntime.enabled
         ? focusLensRuntime.realActivityWeight
@@ -1391,11 +1800,20 @@ export const NeuralCoreScene = ({
       }
     }
     propagationPulseGeometryRef.current?.setDrawRange(0, pulsePointCount);
+    operationalProtagonistMarkerGeometryRef.current?.setDrawRange(
+      0,
+      operationalProtagonistMarkerCount,
+    );
     clusterActivationGeometryRef.current?.setDrawRange(0, clusterPointCount);
     markAttributeForUpdate(propagationPulsePositionRef.current);
     markAttributeForUpdate(propagationPulseColorRef.current);
     markAttributeForUpdate(propagationPulseOpacityRef.current);
     markAttributeForUpdate(propagationPulseSizeRef.current);
+    markAttributeForUpdate(operationalProtagonistMarkerPositionRef.current);
+    markAttributeForUpdate(operationalProtagonistMarkerTangentRef.current);
+    markAttributeForUpdate(operationalProtagonistMarkerColorRef.current);
+    markAttributeForUpdate(operationalProtagonistMarkerOpacityRef.current);
+    markAttributeForUpdate(operationalProtagonistMarkerSizeRef.current);
     markAttributeForUpdate(clusterActivationPositionRef.current);
     markAttributeForUpdate(clusterActivationColorRef.current);
     markAttributeForUpdate(clusterActivationOpacityRef.current);
@@ -1434,7 +1852,7 @@ export const NeuralCoreScene = ({
       markAttributeForUpdate(semanticRibbonThicknessRef.current);
     }
     if (semanticRibbonMaterialRef.current) {
-      semanticRibbonMaterialRef.current.uniforms.uTime.value = elapsedTime;
+      semanticRibbonMaterialRef.current.uniforms.uTime.value = propagationElapsedTime;
       semanticRibbonMaterialRef.current.uniforms.uResolution.value.x = size.width;
       semanticRibbonMaterialRef.current.uniforms.uResolution.value.y = size.height;
       semanticRibbonMaterialRef.current.uniforms.uFocusLensThickness.value =
@@ -1902,11 +2320,20 @@ export const NeuralCoreScene = ({
     }
     if (ambientPulseMaterialRef.current) {
       const opacityUniform = ambientPulseMaterialRef.current.uniforms.uOpacity;
-      const ambientPulseOpacity = graph.pulseField.opacity * ambientCompositionOpacity;
+      const ambientPulseOpacity = graph.pulseField.opacity
+        * ambientCompositionOpacity
+        * (
+          operationalTransmissionActive
+            ? NEURAL_CORE_OPERATIONAL_PROTAGONIST_MARKER_CONFIG
+              .backgroundAmbientPulseMultiplier
+            : 1
+        );
       opacityUniform.value = dampNeuralCoreSceneDirectionValue(
         Number(opacityUniform.value),
         ambientPulseOpacity,
-        semanticVisualizationConfig.transition.releaseResponse,
+        operationalTransmissionActive
+          ? semanticVisualizationConfig.transition.activationResponse
+          : semanticVisualizationConfig.transition.releaseResponse,
         safeDeltaSeconds,
       );
     }
@@ -2110,6 +2537,16 @@ export const NeuralCoreScene = ({
       propagationPulsePositionRef={propagationPulsePositionRef}
       propagationPulseOpacityRef={propagationPulseOpacityRef}
       propagationPulseSizeRef={propagationPulseSizeRef}
+      operationalProtagonistMarkerColorRef={operationalProtagonistMarkerColorRef}
+      operationalProtagonistMarkerField={
+        propagationBuffers.operationalProtagonistMarkerField
+      }
+      operationalProtagonistMarkerGeometryRef={operationalProtagonistMarkerGeometryRef}
+      operationalProtagonistMarkerMaterialRef={operationalProtagonistMarkerMaterialRef}
+      operationalProtagonistMarkerOpacityRef={operationalProtagonistMarkerOpacityRef}
+      operationalProtagonistMarkerPositionRef={operationalProtagonistMarkerPositionRef}
+      operationalProtagonistMarkerSizeRef={operationalProtagonistMarkerSizeRef}
+      operationalProtagonistMarkerTangentRef={operationalProtagonistMarkerTangentRef}
       propagationConfig={propagation.config}
       pulseColorRef={pulseColorRef}
       pulseField={graph.pulseField}
@@ -2149,6 +2586,7 @@ export const NeuralCoreScene = ({
             pulsePositionRef={aggregatedPulsePositionRef}
             pulseSizeRef={aggregatedPulseSizeRef}
             routeField={aggregatedRouteField}
+            routeColorRef={aggregatedRouteColorRef}
             routeOpacityRef={aggregatedRouteOpacityRef}
             routeThicknessRef={aggregatedRouteThicknessRef}
           />

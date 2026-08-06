@@ -49,4 +49,10 @@ export const NEURAL_CORE_DEMO_OPTIONS: readonly NeuralCoreDemoOption[] = [
     label: "Success",
     description: "Completed propagation with a stabilized output destination.",
   },
+  {
+    scenario: "operational-flow",
+    label: "Operational Flow",
+    shortLabel: "Operational",
+    description: "A complete request-processing flow with success, degraded, and failure-recovery executions.",
+  },
 ];

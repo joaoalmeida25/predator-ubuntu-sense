@@ -112,6 +112,7 @@ const getInspectionKey = (
   : "legacy"}:` + (params.interactionMode === "inspection"
   ? `inspection:${params.inspectionFocus.selectedClusterId ?? "overview"}`
     + `:${params.inspectionFocus.relatedClusterIds.join(",")}`
+    + `:${getLabelContextKey(params.directionState, params.narrativeState)}`
   : getLabelContextKey(params.directionState, params.narrativeState));
 
 const dampVisualValue = (
@@ -159,6 +160,7 @@ export const useNeuralCoreClusterLabels = ({
   spatialMap,
   topology,
   topologyVisualState,
+  operationalOverlay,
 }: UseNeuralCoreClusterLabelsParams): UseNeuralCoreClusterLabelsResult => {
   const [models, setModels] = useState<readonly NeuralCoreClusterLabelModel[]>([]);
   const configRef = useRef(config);
@@ -166,11 +168,13 @@ export const useNeuralCoreClusterLabels = ({
   const spatialMapRef = useRef(spatialMap);
   const topologyRef = useRef(topology);
   const topologyVisualStateRef = useRef(topologyVisualState);
+  const operationalOverlayRef = useRef(operationalOverlay);
   configRef.current = config;
   lodConfigRef.current = lodConfig;
   spatialMapRef.current = spatialMap;
   topologyRef.current = topology;
   topologyVisualStateRef.current = topologyVisualState;
+  operationalOverlayRef.current = operationalOverlay;
 
   const runtimeByIdRef = useRef(new Map<string, NeuralCoreClusterLabelRuntime>());
   const levelRuntimeByIdRef = useRef(new Map<string, NeuralCoreClusterLabelLevelRuntime>());
@@ -264,7 +268,7 @@ export const useNeuralCoreClusterLabels = ({
         element.style.opacity = "0";
       }
     }
-  }, [config, lodConfig, spatialMap, topology, topologyVisualState]);
+  }, [config, lodConfig, operationalOverlay, spatialMap, topology, topologyVisualState]);
 
   useEffect(() => {
     runtimeByIdRef.current.clear();
@@ -450,11 +454,30 @@ export const useNeuralCoreClusterLabels = ({
       ? params.inspectionFocus.selectedClusterId
       : undefined;
     const focusedClusterIds = selectedClusterId
-      ? [selectedClusterId]
+      ? [
+        selectedClusterId,
+        ...presentationContext.focusedClusterIds.filter((clusterId) => (
+          clusterId !== selectedClusterId
+        )),
+      ]
       : presentationContext.focusedClusterIds;
+    const operationalImpactClusterIds = operationalOverlayRef.current?.impact
+      ?.affectedClusterIds ?? [];
     const activeClusterIds = selectedClusterId
-      ? [selectedClusterId, ...params.inspectionFocus.relatedClusterIds]
-      : presentationContext.activeClusterIds;
+      ? [
+        selectedClusterId,
+        ...params.inspectionFocus.relatedClusterIds,
+        ...presentationContext.activeClusterIds.filter((clusterId) => (
+          clusterId !== selectedClusterId
+          && !params.inspectionFocus.relatedClusterIds.includes(clusterId)
+        )),
+      ]
+      : [
+        ...presentationContext.activeClusterIds,
+        ...operationalImpactClusterIds.filter((clusterId) => (
+          !presentationContext.activeClusterIds.includes(clusterId)
+        )),
+      ];
     const protagonistClusterId = selectedClusterId
       ?? presentationContext.protagonistClusterId;
     const rawLodState = mapNeuralCoreLodState({
@@ -475,6 +498,7 @@ export const useNeuralCoreClusterLabels = ({
         && params.isContextPanelOpen
         ? selectedClusterId
         : undefined,
+      operationalOverlay: operationalOverlayRef.current,
       config: currentConfig,
     });
     const nextModels = params.clusterGrammarEnabled

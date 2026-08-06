@@ -4,7 +4,7 @@ import type {
   NeuralCoreChoreographyPhase,
   NeuralCoreChoreographyTarget,
 } from "../../domain/choreography/neural-core-choreography.types";
-import type { NeuralCoreDemoScenario } from "./neural-core-demo-state.types";
+import type { NeuralCoreAnimatedDemoScenario } from "./neural-core-demo-state.types";
 
 const cluster = (id: string): NeuralCoreChoreographyTarget => ({ type: "cluster", id });
 const synapse = (id: string): NeuralCoreChoreographyTarget => ({
@@ -30,7 +30,7 @@ const envelope = (
 const phase = (value: NeuralCoreChoreographyPhase): NeuralCoreChoreographyPhase => value;
 
 export const NEURAL_CORE_DEMO_CHOREOGRAPHIES: Record<
-  Exclude<NeuralCoreDemoScenario, "none">,
+  NeuralCoreAnimatedDemoScenario,
   NeuralCoreChoreography
 > = {
   "data-flow": {

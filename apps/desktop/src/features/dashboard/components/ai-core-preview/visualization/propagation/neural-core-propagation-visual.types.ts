@@ -13,6 +13,7 @@ export interface NeuralCoreSynapseVisualActivation {
 }
 
 export interface NeuralCorePropagationVisualPulse {
+  transmissionId: string;
   synapseId: string;
   progress: number;
   intensity: number;

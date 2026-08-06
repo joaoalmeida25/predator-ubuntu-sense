@@ -89,6 +89,12 @@ export const writeNeuralCoreSemanticFocusLensTarget = (
   }
   const hasSelection = params.interactionMode === "inspection"
     && params.selectedClusterId !== undefined;
+  const hasRuntimeFocus = params.interactionMode === "presentation"
+    && params.runtimeFocusedClusterId !== undefined;
+  const hasFocus = hasSelection || hasRuntimeFocus;
+  const focusedClusterId = hasSelection
+    ? params.selectedClusterId
+    : params.runtimeFocusedClusterId;
   const macro = clampNeuralCoreSemanticFocusLensValue(params.densityWeights.macroWeight);
   const meso = clampNeuralCoreSemanticFocusLensValue(params.densityWeights.mesoWeight);
   const micro = clampNeuralCoreSemanticFocusLensValue(params.densityWeights.microWeight);
@@ -104,20 +110,22 @@ export const writeNeuralCoreSemanticFocusLensTarget = (
     ? clampNeuralCoreSemanticFocusLensValue(
       0.48 + meso * 0.28 + micro * 0.46 + proximity * 0.16,
     )
-    : 0;
+    : hasRuntimeFocus ? 0.46 : 0;
   const contextProgress = clampNeuralCoreSemanticFocusLensValue(
-    focusProgress * (0.42 + detailProgress * 0.42),
+    hasRuntimeFocus
+      ? 0.22
+      : focusProgress * (0.42 + detailProgress * 0.42),
   );
   const nearbyNodeFloor = config.brainContext.minimumNearbyNodeOpacity;
   const nearbyConnectionFloor = config.brainContext.minimumNearbyConnectionOpacity;
   const distantNodeFloor = config.brainContext.minimumDistantNodeOpacity;
   const distantConnectionFloor = config.brainContext.minimumDistantConnectionOpacity;
   target.enabled = true;
-  target.selectedClusterId = hasSelection ? params.selectedClusterId : undefined;
+  target.selectedClusterId = hasFocus ? focusedClusterId : undefined;
   target.focusProgress = focusProgress;
   target.contextProgress = contextProgress;
   target.detailProgress = detailProgress;
-  target.selectedRegionWeight = 0.82 + detailProgress * 0.18;
+  target.selectedRegionWeight = hasRuntimeFocus ? 0.9 : 0.82 + detailProgress * 0.18;
   target.relatedRegionWeight = 0.68 + (1 - contextProgress) * 0.18;
   target.nearbyContextWeight = Math.max(nearbyNodeFloor, 0.58 - contextProgress * 0.16);
   target.distantContextWeight = Math.max(distantNodeFloor, 0.34 - contextProgress * 0.2);
@@ -146,7 +154,9 @@ export const writeNeuralCoreSemanticFocusLensTarget = (
       + config.detailReveal.microInternalConnectionVisibility * micro
     : 0;
   target.aggregatedActivityWeight = 1 - detailProgress * 0.72;
-  target.realActivityWeight = hasSelection ? 0.18 + detailProgress * 0.82 : 0.44;
+  target.realActivityWeight = hasSelection
+    ? 0.18 + detailProgress * 0.82
+    : hasRuntimeFocus ? 0.56 : 0.44;
   target.aggregatedRouteThickness = hasSelection
     ? config.routes.macroMaximumThickness * macro
       + config.routes.macroMaximumThickness * 0.72 * meso
@@ -159,19 +169,19 @@ export const writeNeuralCoreSemanticFocusLensTarget = (
       distantNodeFloor,
       0.38 * macro + 0.24 * meso + distantNodeFloor * micro,
     )
-    : 0.38;
+    : hasRuntimeFocus ? 0.42 : 0.38;
   target.brainContext.baseConnectionOpacity = hasSelection
     ? Math.max(
       distantConnectionFloor,
       0.18 * macro + 0.1 * meso + distantConnectionFloor * micro,
     )
-    : 0.18;
+    : hasRuntimeFocus ? 0.22 : 0.18;
   target.brainContext.ambientOpacity = hasSelection
     ? Math.max(0.32, 0.72 - contextProgress * 0.3)
     : 0.72;
   target.brainContext.selectedRegionEmphasis = hasSelection
     ? 0.86 + detailProgress * 0.14
-    : 1;
+    : hasRuntimeFocus ? 0.92 : 1;
   target.brainContext.relatedRegionEmphasis = hasSelection
     ? Math.max(nearbyConnectionFloor, 0.68 - contextProgress * 0.12)
     : 1;

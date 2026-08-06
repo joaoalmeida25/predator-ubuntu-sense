@@ -14,6 +14,7 @@ export interface NeuralCoreAggregatedRoutesViewProps {
   pulsePositionRef: RefObject<BufferAttribute | null>;
   pulseSizeRef: RefObject<BufferAttribute | null>;
   routeField: NeuralCoreAggregatedRouteRenderField;
+  routeColorRef: RefObject<BufferAttribute | null>;
   routeOpacityRef: RefObject<BufferAttribute | null>;
   routeThicknessRef: RefObject<BufferAttribute | null>;
 }

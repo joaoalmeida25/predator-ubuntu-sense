@@ -22,6 +22,7 @@ export const AiCorePreviewView = ({
   neuralNodes,
   callouts,
   demoControls,
+  operationalControls,
   contextPanel,
   inspectionControls,
   inspectionConfig,
@@ -50,6 +51,12 @@ export const AiCorePreviewView = ({
   spatialLayoutConfig,
   onPropagationEvent,
   runtimeScenarioKey,
+  runtimePlaybackStatus,
+  runtimePlaybackPaused,
+  runtimeFocusedClusterId,
+  operationalVisualOverlay,
+  operationalPropagationInput,
+  operationalRouteProgressRef,
 }: AiCorePreviewViewProps): ReactElement => {
   return (
     <section
@@ -95,6 +102,12 @@ export const AiCorePreviewView = ({
           spatialLayoutConfig={spatialLayoutConfig}
           onPropagationEvent={onPropagationEvent}
           runtimeScenarioKey={runtimeScenarioKey}
+          runtimePlaybackStatus={runtimePlaybackStatus}
+          runtimePlaybackPaused={runtimePlaybackPaused}
+          runtimeFocusedClusterId={runtimeFocusedClusterId}
+          operationalVisualOverlay={operationalVisualOverlay}
+          operationalPropagationInput={operationalPropagationInput}
+          operationalRouteProgressRef={operationalRouteProgressRef}
           inspectionConfig={inspectionConfig}
           inspectionFocus={inspectionFocus}
           inspectionState={inspectionState}
@@ -116,6 +129,7 @@ export const AiCorePreviewView = ({
         <div className={`${styles.baseRingTwo} ${styles.inspectionBaseDecoration}`} />
       </div>
 
+      {operationalControls}
       {demoControls}
 
       <div className={`${styles.futureNote} ${styles.inspectionPeripheralUi}`}>

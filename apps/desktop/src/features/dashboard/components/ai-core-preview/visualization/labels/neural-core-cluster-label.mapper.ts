@@ -2,6 +2,9 @@ import { getNeuralCoreClusterDisplayName } from "../../domain/semantic/neural-co
 import type { NeuralCoreTopology } from "../../domain/topology/neural-core-topology.types";
 import type { NeuralCoreLodState } from "../lod/neural-core-lod.types";
 import type {
+  NeuralCoreOperationalVisualOverlay,
+} from "../../demos/operational/mappers/neural-core-operational-visual-state.mapper";
+import type {
   NeuralCoreClusterLabelConfigInput,
   NeuralCoreClusterLabelModel,
   NeuralCoreClusterLabelMetric,
@@ -21,6 +24,7 @@ export interface MapNeuralCoreClusterLabelModelsParams {
   focusedClusterIds?: readonly string[];
   activeClusterIds?: readonly string[];
   compactSelectedClusterId?: string;
+  operationalOverlay?: NeuralCoreOperationalVisualOverlay;
   config?: NeuralCoreClusterLabelConfigInput;
 }
 
@@ -36,6 +40,7 @@ export const mapNeuralCoreClusterLabelModels = ({
   focusedClusterIds = [],
   activeClusterIds = [],
   compactSelectedClusterId,
+  operationalOverlay,
   config: configInput,
 }: MapNeuralCoreClusterLabelModelsParams): readonly NeuralCoreClusterLabelModel[] => {
   const config = resolveNeuralCoreClusterLabelConfig(configInput);
@@ -56,13 +61,17 @@ export const mapNeuralCoreClusterLabelModels = ({
       continue;
     }
     const semanticContext = cluster.semanticContext;
+    const operationalState = operationalOverlay?.clusterStateById[cluster.id];
+    const resolvedActivity = operationalState?.activity ?? cluster.activity;
     const fallbackName = getNeuralCoreClusterDisplayName(cluster);
     const title = lod.level === "overview"
       ? semanticContext?.shortName?.trim() || fallbackName
       : semanticContext?.name?.trim() || fallbackName;
-    const status = cluster.status ?? topology.status ?? "idle";
+    const status = operationalState?.status ?? cluster.status ?? topology.status ?? "idle";
     const metrics: NeuralCoreClusterLabelMetric[] = lod.level === "detail"
-      ? (semanticContext?.metrics ?? [])
+      ? (operationalOverlay?.metricsByClusterId[cluster.id]
+        ?? semanticContext?.metrics
+        ?? [])
         .slice(0, config.content.maximumDetailMetrics)
         .map((metric) => ({
           id: metric.id,
@@ -73,15 +82,23 @@ export const mapNeuralCoreClusterLabelModels = ({
       : [];
     const activity = lod.level === "summary"
       && config.content.showActivityInSummary
-      && typeof cluster.activity === "number"
-      && Number.isFinite(cluster.activity)
-      ? normalizedValue(cluster.activity)
+      && typeof resolvedActivity === "number"
+      && Number.isFinite(resolvedActivity)
+      ? normalizedValue(resolvedActivity)
       : undefined;
+    const operationalImpact = operationalOverlay?.impact;
+    const hasOperationalImpact = operationalImpact?.sourceClusterId === cluster.id
+      || operationalImpact?.affectedClusterIds.includes(cluster.id);
     const impactLevel = lod.level === "detail"
       && config.content.showImpactInDetail
-      && semanticContext?.impact?.level
-      && semanticContext.impact.level !== "none"
-      ? semanticContext.impact.level
+      && (
+        hasOperationalImpact
+          ? operationalImpact?.level
+          : semanticContext?.impact?.level
+      ) !== "none"
+      ? hasOperationalImpact
+        ? operationalImpact?.level
+        : semanticContext?.impact?.level
       : undefined;
     models.push({
       clusterId: cluster.id,
@@ -91,7 +108,9 @@ export const mapNeuralCoreClusterLabelModels = ({
         ? { typeLabel: formatNeuralCoreClusterKind(cluster.kind) }
         : {}),
       status,
-      statusLabel: formatNeuralCoreTopologyStatus(status),
+      statusLabel: operationalState?.operationalStatus === "recovering"
+        ? "Recovering"
+        : formatNeuralCoreTopologyStatus(status),
       ...(activity === undefined
         ? {}
         : { activity, formattedActivity: formatNeuralCoreActivity(activity) }),
@@ -101,10 +120,10 @@ export const mapNeuralCoreClusterLabelModels = ({
         : {}),
       priority: lod.priority,
       distanceToCamera: lod.distanceToCamera,
-      importance: normalizedValue(cluster.importance),
+      importance: normalizedValue(operationalState?.importance ?? cluster.importance),
       isActive: activeById.has(cluster.id),
       isFocused: focusedById.has(cluster.id) || lod.isFocused,
-      isCritical: lod.isCritical,
+      isCritical: lod.isCritical || operationalState?.status === "error",
       isCompact: compactSelectedClusterId === cluster.id,
     });
   }

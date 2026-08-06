@@ -100,6 +100,7 @@ export const NeuralCoreClusterTerritoriesView = ({
               <shaderMaterial
                 vertexShader={EMBEDDED_BOUNDARY_VERTEX_SHADER}
                 fragmentShader={EMBEDDED_BOUNDARY_FRAGMENT_SHADER}
+                userData={{ semanticColor: new Color(territory.color) }}
                 uniforms={{
                   uColor: { value: new Color(territory.color) },
                   uOpacity: { value: 0 },
@@ -119,6 +120,7 @@ export const NeuralCoreClusterTerritoriesView = ({
               <shaderMaterial
                 vertexShader={TERRITORY_BOUNDARY_VERTEX_SHADER}
                 fragmentShader={TERRITORY_BOUNDARY_FRAGMENT_SHADER}
+                userData={{ semanticColor: new Color(territory.color) }}
                 uniforms={{
                   uColor: { value: new Color(territory.color) },
                   uOpacity: { value: 0 },
@@ -147,7 +149,10 @@ export const NeuralCoreClusterTerritoriesView = ({
                 opacity={0}
                 blending={AdditiveBlending}
                 depthWrite={false}
-                userData={{ role: "hub-core" }}
+                userData={{
+                  role: "hub-core",
+                  semanticColor: new Color(territory.color),
+                }}
               />
             </mesh>
             {embeddedMode ? (
@@ -164,7 +169,10 @@ export const NeuralCoreClusterTerritoriesView = ({
                   opacity={0}
                   blending={NormalBlending}
                   depthWrite={false}
-                  userData={{ role: "hub-filaments" }}
+                  userData={{
+                    role: "hub-filaments",
+                    semanticColor: new Color(territory.color),
+                  }}
                 />
               </lineSegments>
             ) : (
@@ -178,7 +186,10 @@ export const NeuralCoreClusterTerritoriesView = ({
                   opacity={0}
                   blending={AdditiveBlending}
                   depthWrite={false}
-                  userData={{ role: "hub-ring" }}
+                  userData={{
+                    role: "hub-ring",
+                    semanticColor: new Color(territory.color),
+                  }}
                 />
               </mesh>
             )}

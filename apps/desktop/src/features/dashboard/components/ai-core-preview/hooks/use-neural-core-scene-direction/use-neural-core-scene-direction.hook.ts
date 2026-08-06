@@ -80,6 +80,9 @@ export const useNeuralCoreSceneDirection = ({
     const safeDeltaSeconds = Number.isFinite(deltaSeconds)
       ? Math.min(0.1, Math.max(0, deltaSeconds))
       : 0;
+    if (safeDeltaSeconds <= 0) {
+      return stateRef.current;
+    }
     elapsedSecondsRef.current += safeDeltaSeconds;
     const currentConfig = configRef.current;
     const desired = evaluateNeuralCoreSceneDirection({

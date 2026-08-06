@@ -55,6 +55,16 @@ import type {
   NeuralCoreSemanticFocusLensConfig,
   NeuralCoreSemanticFocusLensConfigInput,
 } from "./visualization/focus-lens/neural-core-semantic-focus-lens.types";
+import type {
+  NeuralCoreOperationalRuntimeStatus,
+  NeuralCoreOperationalRuntimeValueRef,
+} from "./demos/operational/runtime/neural-core-operational-runtime.types";
+import type {
+  NeuralCoreOperationalRouteVisualRequest,
+} from "./demos/operational/mappers/neural-core-operational-propagation.mapper";
+import type {
+  NeuralCoreOperationalVisualOverlay,
+} from "./demos/operational/mappers/neural-core-operational-visual-state.mapper";
 
 export interface AiCorePreviewProps {
   dataFlow: string;
@@ -126,6 +136,7 @@ export interface AiCorePreviewViewProps {
   callouts: AiCorePreviewCallout[];
   choreography?: NeuralCoreChoreography;
   demoControls?: ReactNode;
+  operationalControls?: ReactNode;
   contextPanel?: ReactNode;
   inspectionControls?: ReactNode;
   inspectionConfig: NeuralCoreInspectionConfig;
@@ -156,4 +167,10 @@ export interface AiCorePreviewViewProps {
   spatialLayoutConfig: NeuralCoreSpatialLayoutConfig;
   topology?: NeuralCoreTopology;
   runtimeScenarioKey: string;
+  runtimePlaybackStatus?: NeuralCoreOperationalRuntimeStatus;
+  runtimePlaybackPaused?: boolean;
+  runtimeFocusedClusterId?: string;
+  operationalVisualOverlay?: NeuralCoreOperationalVisualOverlay;
+  operationalPropagationInput?: NeuralCoreOperationalRouteVisualRequest;
+  operationalRouteProgressRef?: NeuralCoreOperationalRuntimeValueRef;
 }

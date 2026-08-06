@@ -15,6 +15,7 @@ export interface NeuralCoreContextPanelMetricModel {
 }
 
 export interface NeuralCoreContextPanelModel {
+  activeRouteLabel?: string;
   aggregatedConnectionCount?: number;
   activityLabel?: string;
   description?: string;
@@ -24,6 +25,12 @@ export interface NeuralCoreContextPanelModel {
     summary?: string;
   };
   metrics: readonly NeuralCoreContextPanelMetricModel[];
+  retry?: {
+    attempt: number;
+    maximumAttempts: number;
+    reason?: string;
+    status: "scheduled" | "running" | "succeeded" | "failed";
+  };
   name: string;
   incomingRoutes: readonly string[];
   outgoingRoutes: readonly string[];

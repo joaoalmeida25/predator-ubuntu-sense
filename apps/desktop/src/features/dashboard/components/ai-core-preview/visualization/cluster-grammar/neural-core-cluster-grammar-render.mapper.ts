@@ -114,12 +114,26 @@ export const createNeuralCoreAggregatedRouteRenderField = (
 export const updateNeuralCoreAggregatedRouteRenderField = (
   field: NeuralCoreAggregatedRouteRenderField,
   runtime: NeuralCoreClusterGrammarRuntime,
+  activeOperationalRouteIndex?: number,
+  activeRouteOpacityMultiplier = 1,
+  activeRouteThicknessMultiplier = 1,
 ): void => {
+  const operationalOpacityMultiplier = Math.max(
+    0,
+    Math.min(1, activeRouteOpacityMultiplier),
+  );
+  const operationalThicknessMultiplier = Math.max(
+    0,
+    Math.min(1, activeRouteThicknessMultiplier),
+  );
   for (let vertexIndex = 0; vertexIndex < field.opacities.length; vertexIndex += 1) {
-    field.opacities[vertexIndex] = runtime.routeStates[field.routeIndices[vertexIndex]].opacity;
-    field.thicknesses[vertexIndex] = runtime.routeStates[
-      field.routeIndices[vertexIndex]
-    ].thickness;
+    const routeIndex = field.routeIndices[vertexIndex];
+    const routeState = runtime.routeStates[routeIndex];
+    const isActiveOperationalRoute = routeIndex === activeOperationalRouteIndex;
+    field.opacities[vertexIndex] = routeState.opacity
+      * (isActiveOperationalRoute ? operationalOpacityMultiplier : 1);
+    field.thicknesses[vertexIndex] = routeState.thickness
+      * (isActiveOperationalRoute ? operationalThicknessMultiplier : 1);
   }
 };
 
@@ -153,13 +167,19 @@ export const updateNeuralCoreAggregatedPulseField = (
   grammar: NeuralCoreClusterGrammarState,
   runtime: NeuralCoreClusterGrammarRuntime,
   elapsedSeconds: number,
+  activeOperationalGeometryId?: string,
+  backgroundPulseMultiplier = 1,
 ): number => {
   let pointIndex = 0;
   const point = field.scratchPoint;
+  const pulseMultiplier = Math.max(0, Math.min(1, backgroundPulseMultiplier));
   for (let routeIndex = 0; routeIndex < grammar.routes.length; routeIndex += 1) {
     const route = grammar.routes[routeIndex];
     const state = runtime.routeStates[routeIndex];
-    if (state.pulseOpacity <= 0.002) {
+    if (
+      route.id === activeOperationalGeometryId
+      || state.pulseOpacity * pulseMultiplier <= 0.002
+    ) {
       continue;
     }
     const routeColorOffset = routeIndex * 3;
@@ -200,7 +220,9 @@ export const updateNeuralCoreAggregatedPulseField = (
           * (0.84 + state.emphasis * 0.26);
         field.colors[offset + 2] = field.routeColors[routeColorOffset + 2]
           * (0.84 + state.emphasis * 0.26);
-        field.opacities[pointIndex] = state.pulseOpacity * trailWeight;
+        field.opacities[pointIndex] = state.pulseOpacity
+          * pulseMultiplier
+          * trailWeight;
         const roleScale = state.isProtagonist ? 1.2 : state.isRelated ? 1.08 : 1;
         field.sizes[pointIndex] = 0.032
           * (0.74 + state.emphasis * 0.38)

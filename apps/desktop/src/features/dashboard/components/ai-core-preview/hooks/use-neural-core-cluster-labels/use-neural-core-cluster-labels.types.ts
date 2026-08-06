@@ -14,6 +14,9 @@ import type { NeuralCoreTopologyVisualState } from "../../visualization/topology
 import type { NeuralCoreSceneDirectionState } from "../../visualization/direction/neural-core-scene-direction.types";
 import type { NeuralCoreInteractionMode } from "../../domain/inspection/neural-core-inspection.types";
 import type { NeuralCoreInspectionFocusState } from "../../visualization/inspection/neural-core-inspection-focus.types";
+import type {
+  NeuralCoreOperationalVisualOverlay,
+} from "../../demos/operational/mappers/neural-core-operational-visual-state.mapper";
 
 export interface UseNeuralCoreClusterLabelsParams {
   config: NeuralCoreClusterLabelConfig;
@@ -22,6 +25,7 @@ export interface UseNeuralCoreClusterLabelsParams {
   spatialMap: NeuralCoreSpatialMap;
   topology: NeuralCoreTopology;
   topologyVisualState: NeuralCoreTopologyVisualState;
+  operationalOverlay?: NeuralCoreOperationalVisualOverlay;
 }
 
 export interface AdvanceNeuralCoreClusterLabelsParams {

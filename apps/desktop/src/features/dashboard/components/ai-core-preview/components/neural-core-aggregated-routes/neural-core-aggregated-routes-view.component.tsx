@@ -73,6 +73,7 @@ export const NeuralCoreAggregatedRoutesView = ({
   pulsePositionRef,
   pulseSizeRef,
   routeField,
+  routeColorRef,
   routeOpacityRef,
   routeThicknessRef,
 }: NeuralCoreAggregatedRoutesViewProps): ReactElement => {
@@ -85,7 +86,11 @@ export const NeuralCoreAggregatedRoutesView = ({
             attach="attributes-aCenterPosition"
             args={[routeField.centerPositions, 3]}
           />
-          <bufferAttribute attach="attributes-color" args={[routeField.colors, 3]} />
+          <bufferAttribute
+            ref={routeColorRef}
+            attach="attributes-color"
+            args={[routeField.colors, 3]}
+          />
           <bufferAttribute
             ref={routeOpacityRef}
             attach="attributes-aOpacity"

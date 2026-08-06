@@ -113,3 +113,29 @@ export const createNeuralCorePropagationPlan = (
     })),
   };
 };
+
+export const createNeuralCorePropagationPlanWithTransmission = (
+  basePlan: NeuralCorePropagationPlan,
+  transmission: NeuralCoreTransmission,
+): NeuralCorePropagationPlan => {
+  const transmissions = basePlan.topology.transmissions
+    .filter(({ id }) => id !== transmission.id)
+    .concat(transmission);
+  const transmissionsById = new Map(basePlan.transmissionsById);
+  transmissionsById.set(transmission.id, transmission);
+  const transmissionsBySynapseId = new Map(basePlan.transmissionsBySynapseId);
+  const routeTransmissions = (transmissionsBySynapseId.get(transmission.synapseId) ?? [])
+    .filter(({ id }) => id !== transmission.id)
+    .concat(transmission);
+  transmissionsBySynapseId.set(transmission.synapseId, routeTransmissions);
+  return {
+    ...basePlan,
+    topologyKey: `${basePlan.topologyKey}:transmission:${transmission.id}`,
+    topology: {
+      ...basePlan.topology,
+      transmissions,
+    },
+    transmissionsById,
+    transmissionsBySynapseId,
+  };
+};

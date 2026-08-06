@@ -4,10 +4,18 @@ import {
   Color,
   DoubleSide,
   NormalBlending,
+  Vector2,
 } from "three";
 import { Html } from "@react-three/drei";
 
 import type { NeuralCoreSceneViewProps } from "./neural-core-scene-view.types";
+import {
+  NEURAL_CORE_OPERATIONAL_PROTAGONIST_MARKER_CONFIG,
+} from "../../visualization/propagation/neural-core-operational-protagonist-marker.constants";
+import {
+  OPERATIONAL_COMET_FRAGMENT_SHADER,
+  OPERATIONAL_COMET_VERTEX_SHADER,
+} from "../../visualization/propagation/neural-core-operational-protagonist-marker.shaders";
 
 const NEURAL_CORE_FOG_COLOR = new Color("#050816");
 const NEURAL_CORE_FOG_NEAR = 3.9;
@@ -434,6 +442,14 @@ export const NeuralCoreSceneView = ({
   propagationPulsePositionRef,
   propagationPulseOpacityRef,
   propagationPulseSizeRef,
+  operationalProtagonistMarkerColorRef,
+  operationalProtagonistMarkerField,
+  operationalProtagonistMarkerGeometryRef,
+  operationalProtagonistMarkerMaterialRef,
+  operationalProtagonistMarkerOpacityRef,
+  operationalProtagonistMarkerPositionRef,
+  operationalProtagonistMarkerSizeRef,
+  operationalProtagonistMarkerTangentRef,
   propagationConfig,
   pulseField,
   pulseColorRef,
@@ -805,6 +821,93 @@ export const NeuralCoreSceneView = ({
           }}
           transparent
           blending={AdditiveBlending}
+          depthWrite={false}
+        />
+      </points>
+
+      <points frustumCulled={false} renderOrder={6}>
+        <bufferGeometry
+          ref={operationalProtagonistMarkerGeometryRef}
+          drawRange={{ start: 0, count: 0 }}
+        >
+          <bufferAttribute
+            ref={operationalProtagonistMarkerPositionRef}
+            attach="attributes-position"
+            args={[operationalProtagonistMarkerField.positions, 3]}
+          />
+          <bufferAttribute
+            ref={operationalProtagonistMarkerColorRef}
+            attach="attributes-color"
+            args={[operationalProtagonistMarkerField.colors, 3]}
+          />
+          <bufferAttribute
+            ref={operationalProtagonistMarkerTangentRef}
+            attach="attributes-aTangent"
+            args={[operationalProtagonistMarkerField.tangents, 3]}
+          />
+          <bufferAttribute
+            ref={operationalProtagonistMarkerSizeRef}
+            attach="attributes-aSize"
+            args={[operationalProtagonistMarkerField.sizes, 1]}
+          />
+          <bufferAttribute
+            ref={operationalProtagonistMarkerOpacityRef}
+            attach="attributes-aOpacity"
+            args={[operationalProtagonistMarkerField.opacities, 1]}
+          />
+        </bufferGeometry>
+        <shaderMaterial
+          ref={operationalProtagonistMarkerMaterialRef}
+          vertexShader={OPERATIONAL_COMET_VERTEX_SHADER}
+          fragmentShader={OPERATIONAL_COMET_FRAGMENT_SHADER}
+          uniforms={{
+            uViewport: { value: new Vector2(1, 1) },
+            uPointScale: {
+              value: NEURAL_CORE_OPERATIONAL_PROTAGONIST_MARKER_CONFIG.pointScale,
+            },
+            uMinimumScreenLength: {
+              value: NEURAL_CORE_OPERATIONAL_PROTAGONIST_MARKER_CONFIG
+                .minimumScreenLength,
+            },
+            uMaximumScreenLength: {
+              value: NEURAL_CORE_OPERATIONAL_PROTAGONIST_MARKER_CONFIG
+                .maximumScreenLength,
+            },
+            uDistanceScaleInfluence: {
+              value: NEURAL_CORE_OPERATIONAL_PROTAGONIST_MARKER_CONFIG
+                .distanceScaleInfluence,
+            },
+            uTangentProbeLength: {
+              value: NEURAL_CORE_OPERATIONAL_PROTAGONIST_MARKER_CONFIG
+                .tangentProbeLength,
+            },
+            uAspectRatio: {
+              value: NEURAL_CORE_OPERATIONAL_PROTAGONIST_MARKER_CONFIG.aspectRatio,
+            },
+            uHeadPosition: {
+              value: NEURAL_CORE_OPERATIONAL_PROTAGONIST_MARKER_CONFIG.headPosition,
+            },
+            uHeadRadius: {
+              value: NEURAL_CORE_OPERATIONAL_PROTAGONIST_MARKER_CONFIG.headRadius,
+            },
+            uTailLength: {
+              value: NEURAL_CORE_OPERATIONAL_PROTAGONIST_MARKER_CONFIG.tailLength,
+            },
+            uTailMaximumWidth: {
+              value: NEURAL_CORE_OPERATIONAL_PROTAGONIST_MARKER_CONFIG
+                .tailMaximumWidth,
+            },
+            uTailFalloff: {
+              value: NEURAL_CORE_OPERATIONAL_PROTAGONIST_MARKER_CONFIG.tailFalloff,
+            },
+            uSemanticColorInfluence: {
+              value: NEURAL_CORE_OPERATIONAL_PROTAGONIST_MARKER_CONFIG
+                .semanticColorInfluence,
+            },
+          }}
+          transparent
+          blending={NormalBlending}
+          depthTest
           depthWrite={false}
         />
       </points>

@@ -31,12 +31,14 @@ export const mapNeuralCoreClusterGrammar = ({
   const routes = mapNeuralCoreAggregatedRoutes(topology, topologyVisualState);
   const territoryIndexByClusterId: Record<string, number> = {};
   const routeIndicesByClusterId: Record<string, number[]> = {};
+  const routeIndexById: Record<string, number> = {};
   const routeIndexBySynapseId: Record<string, number> = {};
   territories.forEach((territory, index): void => {
     territoryIndexByClusterId[territory.clusterId] = index;
     routeIndicesByClusterId[territory.clusterId] = [];
   });
   routes.forEach((route, index): void => {
+    routeIndexById[route.id] = index;
     routeIndicesByClusterId[route.sourceClusterId]?.push(index);
     routeIndicesByClusterId[route.targetClusterId]?.push(index);
     for (const synapseId of route.synapseIds) {
@@ -49,6 +51,7 @@ export const mapNeuralCoreClusterGrammar = ({
     routes,
     lookups: {
       routeIndicesByClusterId,
+      routeIndexById,
       routeIndexBySynapseId,
       territoryIndexByClusterId,
     },
