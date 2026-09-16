@@ -1,4 +1,4 @@
-import type { NeuralCoreTopology } from "../../../domain/topology/neural-core-topology.types";
+import type { NeuralCoreTopology } from "../../topology/neural-core-topology.types";
 import type { NeuralCoreOperationalExecution } from "./neural-core-operational-execution.types";
 
 export type NeuralCoreOperationalStageRole =

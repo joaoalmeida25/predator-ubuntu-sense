@@ -2,11 +2,7 @@ import { useCallback, useMemo, useRef, useState, type ReactElement } from "react
 
 import styles from "./ai-core-preview.module.css";
 import { AiCorePreviewView } from "./ai-core-preview-view.component";
-import type {
-  AiCorePreviewLine,
-  AiCorePreviewNode,
-  AiCorePreviewProps,
-} from "./ai-core-preview-view.types";
+import type { AiCorePreviewProps } from "./ai-core-preview-view.types";
 import { NeuralCoreDemoControls } from "./components/neural-core-demo-controls/neural-core-demo-controls.component";
 import {
   DEFAULT_NEURAL_CORE_DEMO_SCENARIO,
@@ -19,20 +15,13 @@ import { createNeuralCoreTopologyFromState } from "./domain/topology/neural-core
 import type { NeuralCoreTopology } from "./domain/topology/neural-core-topology.types";
 import { normalizeNeuralCoreTopology } from "./domain/topology/neural-core-topology.utils";
 import { resolveNeuralCoreSemanticVisualizationConfig } from "./visualization/semantic/neural-core-semantic-visual.utils";
-import {
-  resolveNeuralCoreSceneDirectionConfig,
-  resolveNeuralCoreSceneMotionConfig,
-} from "./visualization/direction/neural-core-scene-direction.utils";
+import { resolveNeuralCoreSceneMotionConfig } from "./visualization/direction/neural-core-scene-direction.utils";
 import {
   resolveNeuralCoreClusterGrammarConfig,
 } from "./visualization/cluster-grammar/neural-core-cluster-grammar.utils";
-import {
-  resolveNeuralCoreSemanticFocusLensConfig,
-} from "./visualization/focus-lens/neural-core-semantic-focus-lens.utils";
 import { EMPTY_NEURAL_CORE_NARRATIVE_STATE } from "./domain/narrative/neural-core-narrative.constants";
 import type { NeuralCoreNarrativeState } from "./domain/narrative/neural-core-narrative.types";
 import { resolveNeuralCoreNarrativeConfig } from "./domain/narrative/neural-core-narrative.utils";
-import { resolveNeuralCoreSpatialLayoutConfig } from "./visualization/spatial/neural-core-spatial-map.utils";
 import { resolveNeuralCoreClusterLabelConfig } from "./visualization/labels/neural-core-cluster-label.utils";
 import { resolveNeuralCoreLodConfig } from "./visualization/lod/neural-core-lod.utils";
 import { resolveNeuralCoreInspectionConfig } from "./domain/inspection/neural-core-inspection.utils";
@@ -41,52 +30,15 @@ import { NeuralCoreInspectionControls } from "./components/neural-core-inspectio
 import { NeuralCoreContextPanel } from "./components/neural-core-context-panel/neural-core-context-panel.component";
 import { NeuralCoreOperationalControls } from "./demos/operational/components/neural-core-operational-controls/neural-core-operational-controls.component";
 import { NEURAL_CORE_OPERATIONAL_SUCCESS_EXECUTION_ID } from "./demos/operational/executions/request-success.execution";
-import { useNeuralCoreOperationalRuntime } from "./demos/operational/hooks/use-neural-core-operational-runtime.hook";
-import { mapOperationalRuntimeToNeuralCoreNarrative } from "./demos/operational/mappers/neural-core-operational-narrative.mapper";
+import { useNeuralCoreOperationalRuntime } from "./domain/operational-runtime/hooks/use-neural-core-operational-runtime.hook";
+import { mapOperationalRuntimeToNeuralCoreNarrative } from "./domain/operational-runtime/mappers/neural-core-operational-narrative.mapper";
 import { mapNeuralCoreOperationalOutcomeSummary } from "./demos/operational/mappers/neural-core-operational-outcome-summary.mapper";
-import { mapOperationalRouteEventToVisualRequest } from "./demos/operational/mappers/neural-core-operational-propagation.mapper";
-import { mapOperationalRuntimeToNeuralCoreSceneDirection } from "./demos/operational/mappers/neural-core-operational-scene-direction.mapper";
-import { mapOperationalRuntimeToNeuralCoreVisualOverlay } from "./demos/operational/mappers/neural-core-operational-visual-state.mapper";
+import { mapOperationalRuntimeToNeuralCoreVisualOverlay } from "./domain/operational-runtime/mappers/neural-core-operational-visual-state.mapper";
 import { getNeuralCoreOperationalScenario } from "./demos/operational/scenarios/request-processing.scenario";
 import { mapNeuralCoreInspectionFocus } from "./visualization/inspection/neural-core-inspection-focus.mapper";
-
-const createNeuralNodes = (): AiCorePreviewNode[] => {
-  return Array.from({ length: 84 }, (_, index) => {
-    const angle = index * 2.399963229728653;
-    const radius = Math.sqrt(index / 84) * 42;
-    const zWave = Math.sin(index * 0.74) * 9;
-    const x = 50 + Math.cos(angle) * radius * (0.92 + Math.sin(index * 0.19) * 0.08);
-    const y = 49 + Math.sin(angle) * radius * 0.78 + zWave;
-
-    return {
-      id: index,
-      x: Math.max(7, Math.min(93, x)),
-      y: Math.max(8, Math.min(91, y)),
-      depth: 0.48 + ((Math.sin(index * 1.71) + 1) / 2) * 0.52,
-      isHot: index % 9 === 0 || index % 17 === 0,
-    };
-  });
-};
-
-const getDistance = (from: AiCorePreviewNode, to: AiCorePreviewNode): number => {
-  return Math.hypot(from.x - to.x, from.y - to.y);
-};
-
-const neuralNodes = createNeuralNodes();
-
-const neuralLines: AiCorePreviewLine[] = neuralNodes.flatMap((node, index) => {
-  return neuralNodes
-    .filter((candidate) => candidate.id !== node.id)
-    .map((candidate) => ({ candidate, distance: getDistance(node, candidate) }))
-    .sort((a, b) => a.distance - b.distance)
-    .slice(0, index % 3 === 0 ? 3 : 2)
-    .filter(({ candidate }) => candidate.id > node.id)
-    .map(({ candidate }) => ({
-      id: `${node.id}-${candidate.id}`,
-      from: node,
-      to: candidate,
-    }));
-});
+import { mapNeuralCoreDemoConfig } from "./demos/mappers/neural-core-demo-config.mapper";
+import { mapNeuralCoreDemoModel } from "./demos/mappers/neural-core-demo-model.mapper";
+import { mapNeuralCoreOperationalExecutionToPublicRuntime } from "./demos/operational/mappers/neural-core-operational-public-runtime.mapper";
 
 const operationalScenario = getNeuralCoreOperationalScenario();
 const operationalExecutionById = new Map(
@@ -116,12 +68,9 @@ export const AiCorePreview = ({
   autoRotate,
   sceneMotionConfig,
   sceneDirection,
-  sceneDirectionConfig,
   state,
   choreography,
   semanticVisualizationConfig,
-  spatialMap,
-  spatialLayoutConfig,
   showClusterLabels,
   clusterLabelConfig,
   lodConfig,
@@ -133,7 +82,6 @@ export const AiCorePreview = ({
   onDemoScenarioChange,
   propagationConfig,
   propagationPreset,
-  onPropagationEvent,
   inspectionEnabled,
   inspectionConfig,
   interactionMode,
@@ -171,16 +119,6 @@ export const AiCorePreview = ({
   const resolvedSemanticVisualizationConfig = useMemo(() => {
     return resolveNeuralCoreSemanticVisualizationConfig(semanticVisualizationConfig);
   }, [semanticVisualizationConfig]);
-  const resolvedSpatialLayoutConfig = useMemo(() => {
-    const topologyConfig = resolvedSemanticVisualizationConfig.topology;
-    return resolveNeuralCoreSpatialLayoutConfig({
-      ...spatialLayoutConfig,
-      minimumClusterSeparation: spatialLayoutConfig?.minimumClusterSeparation
-        ?? topologyConfig.minimumClusterSeparation,
-      maximumClusterOverlapRatio: spatialLayoutConfig?.maximumClusterOverlapRatio
-        ?? topologyConfig.maximumClusterOverlapRatio,
-    });
-  }, [resolvedSemanticVisualizationConfig.topology, spatialLayoutConfig]);
   const resolvedSceneMotionConfig = useMemo(() => {
     return resolveNeuralCoreSceneMotionConfig(sceneMotionConfig, autoRotate);
   }, [autoRotate, sceneMotionConfig]);
@@ -196,12 +134,6 @@ export const AiCorePreview = ({
   const resolvedClusterGrammarConfig = useMemo(() => {
     return resolveNeuralCoreClusterGrammarConfig(clusterGrammarConfig);
   }, [clusterGrammarConfig]);
-  const resolvedSemanticFocusLensConfig = useMemo(() => {
-    return resolveNeuralCoreSemanticFocusLensConfig(semanticFocusLensConfig);
-  }, [semanticFocusLensConfig]);
-  const resolvedSceneDirectionConfig = useMemo(() => {
-    return resolveNeuralCoreSceneDirectionConfig(sceneDirectionConfig);
-  }, [sceneDirectionConfig]);
   const resolvedNarrativeConfig = useMemo(() => {
     return resolveNeuralCoreNarrativeConfig(narrativeConfig, showNarrativeOverlay);
   }, [narrativeConfig, showNarrativeOverlay]);
@@ -258,6 +190,56 @@ export const AiCorePreview = ({
   const selectedOperationalExecution = operationalExecutionById.get(
     selectedOperationalExecutionId,
   ) ?? operationalScenario.executions[0];
+  const demoModelMapping = useMemo(() => mapNeuralCoreDemoModel({
+    choreography: effectiveChoreography,
+    id: `demo:${selectedDemoScenario}`,
+    narrative: baseNarrative,
+    presentationKey: runtimeScenarioKey,
+    sceneDirection: baseSceneDirection,
+    state: baseState,
+    topology: baseTopology,
+  }), [
+    baseSceneDirection,
+    baseState,
+    baseTopology,
+    effectiveChoreography,
+    baseNarrative,
+    runtimeScenarioKey,
+    selectedDemoScenario,
+  ]);
+  const publicModel = demoModelMapping.model;
+  const presentationBinding = useMemo(() => ({
+    ...demoModelMapping.presentation,
+    ...(semanticFocusLensConfig === undefined ? {} : { semanticFocusLensConfig }),
+  }), [demoModelMapping.presentation, semanticFocusLensConfig]);
+  const inspectionBinding = useMemo(() => ({ controller: inspection }), [inspection]);
+  const publicConfig = useMemo(() => mapNeuralCoreDemoConfig({
+    autoRotate: resolvedSceneMotionConfig.autoRotate,
+    inspectionEnabled: resolvedInspectionConfig.enabled,
+    labelsEnabled: resolvedClusterLabelConfig.enabled,
+    narrativeEnabled: resolvedNarrativeConfig.enabled,
+    scenario: selectedDemoScenario,
+    showActivity: resolvedSemanticVisualizationConfig.enabled,
+    showRoutes: resolvedPropagationConfig.enabled,
+    visualizationDensity: !resolvedClusterGrammarConfig.enabled
+      ? "minimal"
+      : resolvedLodConfig.enabled ? "balanced" : "detailed",
+  }), [
+    resolvedClusterLabelConfig.enabled,
+    resolvedInspectionConfig.enabled,
+    resolvedNarrativeConfig.enabled,
+    resolvedClusterGrammarConfig.enabled,
+    resolvedLodConfig.enabled,
+    resolvedPropagationConfig.enabled,
+    resolvedSemanticVisualizationConfig.enabled,
+    resolvedSceneMotionConfig.autoRotate,
+    selectedDemoScenario,
+  ]);
+  const publicRuntime = useMemo(() => (
+    operationalRuntimeEnabled
+      ? mapNeuralCoreOperationalExecutionToPublicRuntime(selectedOperationalExecution)
+      : undefined
+  ), [operationalRuntimeEnabled, selectedOperationalExecution]);
   const operationalRuntime = useNeuralCoreOperationalRuntime({
     execution: selectedOperationalExecution,
     scenario: operationalScenario,
@@ -265,6 +247,9 @@ export const AiCorePreview = ({
     suspended: inspection.state.isPaused,
     resetKey: `${selectedDemoScenario}:${demoReplayRevision}:${selectedOperationalExecution.id}`,
   });
+  const runtimeBinding = useMemo(() => (
+    operationalRuntimeEnabled ? { operationalRuntime } : undefined
+  ), [operationalRuntime, operationalRuntimeEnabled]);
   const topology = baseTopology;
   const operationalVisualActive = operationalRuntime.snapshot.status !== "idle";
   const operationalVisualOverlay = useMemo(() => (
@@ -275,26 +260,6 @@ export const AiCorePreview = ({
       })
       : undefined
   ), [operationalRuntime.snapshot, operationalRuntimeEnabled, operationalVisualActive, topology]);
-  const operationalPropagationInput = useMemo(() => {
-    const event = operationalRuntime.activeRouteEvent;
-    const presentationEvent = operationalRuntime.activeRoutePresentationEvent;
-    const route = operationalRuntime.activeRoute;
-    if (!operationalRuntimeEnabled || !event || !presentationEvent || !route) {
-      return undefined;
-    }
-    return mapOperationalRouteEventToVisualRequest({
-      executionId: selectedOperationalExecution.id,
-      event,
-      route,
-      presentationEvent,
-    });
-  }, [
-    operationalRuntime.activeRoute,
-    operationalRuntime.activeRouteEvent,
-    operationalRuntime.activeRoutePresentationEvent,
-    operationalRuntimeEnabled,
-    selectedOperationalExecution.id,
-  ]);
   const operationalNarrativeStatus = operationalRuntime.snapshot.status === "idle"
     ? "idle"
     : operationalRuntime.snapshot.status === "completed" ? "completed" : "active";
@@ -317,18 +282,6 @@ export const AiCorePreview = ({
   const effectiveNarrative = resolvedNarrativeConfig.enabled
     ? selectedNarrative
     : undefined;
-  const operationalSceneDirection = useMemo(() => (
-    operationalRuntimeEnabled && operationalRuntime.autoFollowInPresentation
-      ? mapOperationalRuntimeToNeuralCoreSceneDirection(operationalRuntime.snapshot)
-      : undefined
-  ), [
-    operationalRuntime.autoFollowInPresentation,
-    operationalNarrativeStatus,
-    operationalRuntime.snapshot.activeClusterId,
-    operationalRuntime.snapshot.executionId,
-    operationalRuntimeEnabled,
-  ]);
-  const effectiveSceneDirection = operationalSceneDirection ?? baseSceneDirection;
   const handleNarrativeStateChange = useCallback((nextState: NeuralCoreNarrativeState): void => {
     setNarrativeOverlayState((currentState) => {
       return currentState.narrativeId === nextState.narrativeId
@@ -405,11 +358,41 @@ export const AiCorePreview = ({
     setDismissedOperationalPanelKey(undefined);
     setSelectedOperationalExecutionId(executionId);
   }, []);
+  const publicInteractionState = useMemo(() => ({
+    mode: inspection.state.mode,
+    selectedClusterId: inspection.state.selectedClusterId,
+    paused: inspection.state.isPaused,
+  }), [
+    inspection.state.isPaused,
+    inspection.state.mode,
+    inspection.state.selectedClusterId,
+  ]);
+  const handlePublicInteractionStateChange = useCallback((nextState: {
+    readonly mode: "presentation" | "inspection";
+    readonly selectedClusterId?: string;
+    readonly paused: boolean;
+  }): void => {
+    if (nextState.mode !== inspection.state.mode) {
+      if (nextState.mode === "inspection") {
+        inspection.enterInspection();
+      } else {
+        inspection.exitInspection();
+      }
+    }
+    if (nextState.selectedClusterId !== inspection.state.selectedClusterId) {
+      if (nextState.selectedClusterId === undefined) {
+        inspection.clearSelection();
+      } else {
+        inspection.selectCluster(nextState.selectedClusterId);
+      }
+    }
+    if (nextState.paused !== inspection.state.isPaused) {
+      inspection.togglePaused();
+    }
+  }, [inspection]);
 
   return (
     <AiCorePreviewView
-      neuralNodes={neuralNodes}
-      neuralLines={neuralLines}
       inspectionControls={resolvedInspectionConfig.enabled ? (
         <NeuralCoreInspectionControls
           mode={inspection.state.mode}
@@ -441,13 +424,9 @@ export const AiCorePreview = ({
           )
           : undefined
       }
-      inspectionConfig={resolvedInspectionConfig}
       inspectionFocus={inspection.focus}
       inspectionState={inspection.state}
-      cameraResetRevision={inspection.cameraResetRevision}
-      onCameraTransitioningChange={inspection.setCameraTransitioning}
       onKeyDown={inspection.handleKeyDown}
-      onSelectCluster={inspection.selectCluster}
       demoControls={showDemoControls ? (
         <NeuralCoreDemoControls
           currentScenario={selectedDemoScenario}
@@ -480,39 +459,17 @@ export const AiCorePreview = ({
         />
       ) : undefined}
       engineVersion={engineVersion}
-      choreography={effectiveChoreography}
-      narrative={effectiveNarrative}
       narrativeConfig={resolvedNarrativeConfig}
       narrativeState={visibleNarrativeState}
       onNarrativeStateChange={handleNarrativeStateChange}
-      topology={topology}
-      propagationConfig={resolvedPropagationConfig}
-      sceneDirection={effectiveSceneDirection}
-      sceneDirectionConfig={resolvedSceneDirectionConfig}
-      sceneMotionConfig={resolvedSceneMotionConfig}
-      semanticVisualizationConfig={resolvedSemanticVisualizationConfig}
-      clusterLabelConfig={resolvedClusterLabelConfig}
-      lodConfig={resolvedLodConfig}
-      clusterGrammarConfig={resolvedClusterGrammarConfig}
-      semanticFocusLensConfig={resolvedSemanticFocusLensConfig}
-      spatialMap={spatialMap}
-      spatialLayoutConfig={resolvedSpatialLayoutConfig}
-      onPropagationEvent={onPropagationEvent}
-      runtimeScenarioKey={runtimeScenarioKey}
-      runtimePlaybackStatus={operationalRuntimeEnabled
-        ? operationalRuntime.snapshot.status
-        : undefined}
-      runtimePlaybackPaused={operationalRuntimeEnabled
-        ? operationalRuntime.snapshot.isPaused
-        : undefined}
-      runtimeFocusedClusterId={operationalRuntimeEnabled
-        ? operationalRuntime.snapshot.activeClusterId
-        : undefined}
-      operationalVisualOverlay={operationalVisualOverlay}
-      operationalPropagationInput={operationalPropagationInput}
-      operationalRouteProgressRef={operationalRuntimeEnabled
-        ? operationalRuntime.activeRouteProgressRef
-        : undefined}
+      publicModel={publicModel}
+      publicConfig={publicConfig}
+      publicRuntime={publicRuntime}
+      inspectionBinding={inspectionBinding}
+      presentationBinding={presentationBinding}
+      runtimeBinding={runtimeBinding}
+      publicInteractionState={publicInteractionState}
+      onPublicInteractionStateChange={handlePublicInteractionStateChange}
       callouts={[
         {
           className: styles.calloutLeftTop,

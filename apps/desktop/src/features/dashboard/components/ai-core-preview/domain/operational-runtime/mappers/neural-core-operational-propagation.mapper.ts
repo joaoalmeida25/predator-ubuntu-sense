@@ -1,11 +1,11 @@
 import type {
   NeuralCoreSynapse,
   NeuralCoreTransmission,
-} from "../../../domain/topology/neural-core-topology.types";
+} from "../../topology/neural-core-topology.types";
 import type {
   NeuralCoreOperationalRouteVisualChannel,
 } from "../../../visualization/cluster-grammar/neural-core-operational-route-visual-channel.types";
-import type { NeuralCoreOperationalEvent } from "../domain/neural-core-operational-event.types";
+import type { NeuralCoreOperationalEvent } from "../types/neural-core-operational-event.types";
 import type {
   NeuralCoreOperationalPresentationEvent,
 } from "../runtime/neural-core-operational-presentation.types";

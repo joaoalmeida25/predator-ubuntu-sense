@@ -1,0 +1,18 @@
+.root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fallback {
+  display: grid;
+  position: absolute;
+  inset: 10%;
+  place-items: center;
+  border: 1px solid rgba(121, 151, 178, 0.24);
+  border-radius: 24px;
+  background: rgba(8, 13, 24, 0.72);
+  color: rgba(224, 235, 246, 0.82);
+  font-size: 13px;
+  text-align: center;
+}

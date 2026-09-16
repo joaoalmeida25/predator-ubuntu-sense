@@ -16,7 +16,7 @@ import type { NeuralCoreInteractionMode } from "../../domain/inspection/neural-c
 import type { NeuralCoreInspectionFocusState } from "../../visualization/inspection/neural-core-inspection-focus.types";
 import type {
   NeuralCoreOperationalVisualOverlay,
-} from "../../demos/operational/mappers/neural-core-operational-visual-state.mapper";
+} from "../../domain/operational-runtime/mappers/neural-core-operational-visual-state.mapper";
 
 export interface UseNeuralCoreClusterLabelsParams {
   config: NeuralCoreClusterLabelConfig;

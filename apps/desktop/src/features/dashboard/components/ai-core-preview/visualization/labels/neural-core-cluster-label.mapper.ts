@@ -3,7 +3,7 @@ import type { NeuralCoreTopology } from "../../domain/topology/neural-core-topol
 import type { NeuralCoreLodState } from "../lod/neural-core-lod.types";
 import type {
   NeuralCoreOperationalVisualOverlay,
-} from "../../demos/operational/mappers/neural-core-operational-visual-state.mapper";
+} from "../../domain/operational-runtime/mappers/neural-core-operational-visual-state.mapper";
 import type {
   NeuralCoreClusterLabelConfigInput,
   NeuralCoreClusterLabelModel,

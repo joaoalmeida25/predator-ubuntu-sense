@@ -1,4 +1,4 @@
-import type { NeuralCoreOperationalExecution } from "../domain/neural-core-operational-execution.types";
+import type { NeuralCoreOperationalExecution } from "../../../domain/operational-runtime/types/neural-core-operational-execution.types";
 import { normalizeNeuralCoreOperationalExecution } from "../mappers/neural-core-operational-scenario.mapper";
 import {
   NEURAL_CORE_OPERATIONAL_CLUSTER_IDS as CLUSTER,

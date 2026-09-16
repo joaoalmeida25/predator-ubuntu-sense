@@ -1,7 +1,7 @@
 import type {
   NeuralCoreNarrative,
   NeuralCoreNarrativePhaseKind,
-} from "../../../domain/narrative/neural-core-narrative.types";
+} from "../../narrative/neural-core-narrative.types";
 import type { NeuralCoreOperationalRuntimeSnapshot } from "../runtime/neural-core-operational-runtime.types";
 
 const formatPrimaryMetric = (

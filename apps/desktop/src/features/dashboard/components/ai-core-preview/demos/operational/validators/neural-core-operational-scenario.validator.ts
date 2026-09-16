@@ -1,12 +1,12 @@
 import { validateNeuralCoreClusterSemanticRelationships } from "../../../domain/semantic/neural-core-semantic-context.utils";
-import type { NeuralCoreOperationalEvent } from "../domain/neural-core-operational-event.types";
-import type { NeuralCoreOperationalExecution } from "../domain/neural-core-operational-execution.types";
-import type { NeuralCoreOperationalMetric } from "../domain/neural-core-operational-metric.types";
+import type { NeuralCoreOperationalEvent } from "../../../domain/operational-runtime/types/neural-core-operational-event.types";
+import type { NeuralCoreOperationalExecution } from "../../../domain/operational-runtime/types/neural-core-operational-execution.types";
+import type { NeuralCoreOperationalMetric } from "../../../domain/operational-runtime/types/neural-core-operational-metric.types";
 import type {
   NeuralCoreOperationalDiagnostic,
   NeuralCoreOperationalScenario,
   NeuralCoreOperationalValidationResult,
-} from "../domain/neural-core-operational-scenario.types";
+} from "../../../domain/operational-runtime/types/neural-core-operational-scenario.types";
 
 type DiagnosticContext = Omit<NeuralCoreOperationalDiagnostic, "code" | "message" | "severity">;
 

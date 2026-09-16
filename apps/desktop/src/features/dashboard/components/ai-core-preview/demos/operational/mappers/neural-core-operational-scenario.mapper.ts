@@ -7,14 +7,14 @@ import type {
 } from "../../../domain/contract/neural-core-contract.types";
 import type { NeuralCoreNarrative } from "../../../domain/narrative/neural-core-narrative.types";
 import { normalizeNeuralCoreTopology } from "../../../domain/topology/neural-core-topology.utils";
-import type { NeuralCoreOperationalEvent } from "../domain/neural-core-operational-event.types";
-import type { NeuralCoreOperationalExecution } from "../domain/neural-core-operational-execution.types";
-import type { NeuralCoreOperationalMetric } from "../domain/neural-core-operational-metric.types";
-import type { NeuralCoreOperationalOutcome } from "../domain/neural-core-operational-outcome.types";
+import type { NeuralCoreOperationalEvent } from "../../../domain/operational-runtime/types/neural-core-operational-event.types";
+import type { NeuralCoreOperationalExecution } from "../../../domain/operational-runtime/types/neural-core-operational-execution.types";
+import type { NeuralCoreOperationalMetric } from "../../../domain/operational-runtime/types/neural-core-operational-metric.types";
+import type { NeuralCoreOperationalOutcome } from "../../../domain/operational-runtime/types/neural-core-operational-outcome.types";
 import type {
   NeuralCoreOperationalScenario,
   NeuralCoreOperationalStage,
-} from "../domain/neural-core-operational-scenario.types";
+} from "../../../domain/operational-runtime/types/neural-core-operational-scenario.types";
 import { validateNeuralCoreOperationalScenario } from "../validators/neural-core-operational-scenario.validator";
 
 const normalizedString = (value: string): string => value.trim();

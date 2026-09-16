@@ -1,6 +1,6 @@
-import type { NeuralCoreOperationalExecution } from "../domain/neural-core-operational-execution.types";
-import type { NeuralCoreOperationalEvent } from "../domain/neural-core-operational-event.types";
-import type { NeuralCoreOperationalScenario } from "../domain/neural-core-operational-scenario.types";
+import type { NeuralCoreOperationalExecution } from "../types/neural-core-operational-execution.types";
+import type { NeuralCoreOperationalEvent } from "../types/neural-core-operational-event.types";
+import type { NeuralCoreOperationalScenario } from "../types/neural-core-operational-scenario.types";
 import type {
   NeuralCoreOperationalRuntimeConfigInput,
   NeuralCoreOperationalRuntimeController,

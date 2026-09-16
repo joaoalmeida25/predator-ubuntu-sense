@@ -24,7 +24,7 @@ import type {
 } from "../focus-lens/neural-core-semantic-focus-lens.types";
 import type {
   NeuralCoreOperationalVisualOverlay,
-} from "../../demos/operational/mappers/neural-core-operational-visual-state.mapper";
+} from "../../domain/operational-runtime/mappers/neural-core-operational-visual-state.mapper";
 import type {
   NeuralCoreOperationalRouteVisualChannel,
 } from "./neural-core-operational-route-visual-channel.types";

@@ -1,7 +1,7 @@
 import type {
   NeuralCoreOperationalEvent,
-} from "../domain/neural-core-operational-event.types";
-import type { NeuralCoreOperationalMetric } from "../domain/neural-core-operational-metric.types";
+} from "../types/neural-core-operational-event.types";
+import type { NeuralCoreOperationalMetric } from "../types/neural-core-operational-metric.types";
 import type {
   NeuralCoreOperationalClusterRuntimeState,
   NeuralCoreOperationalEventBoundary,

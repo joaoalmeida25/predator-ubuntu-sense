@@ -3,18 +3,18 @@ import type { RefObject } from "react";
 import type {
   NeuralCoreOperationalEvent,
   NeuralCoreOperationalImpactLevel,
-} from "../domain/neural-core-operational-event.types";
-import type { NeuralCoreOperationalExecution } from "../domain/neural-core-operational-execution.types";
-import type { NeuralCoreOperationalMetric } from "../domain/neural-core-operational-metric.types";
-import type { NeuralCoreOperationalOutcome } from "../domain/neural-core-operational-outcome.types";
+} from "../types/neural-core-operational-event.types";
+import type { NeuralCoreOperationalExecution } from "../types/neural-core-operational-execution.types";
+import type { NeuralCoreOperationalMetric } from "../types/neural-core-operational-metric.types";
+import type { NeuralCoreOperationalOutcome } from "../types/neural-core-operational-outcome.types";
 import type {
   NeuralCoreOperationalStage,
-} from "../domain/neural-core-operational-scenario.types";
+} from "../types/neural-core-operational-scenario.types";
 import type {
   NeuralCoreCluster,
   NeuralCoreSynapse,
   NeuralCoreTopologyStatus,
-} from "../../../domain/topology/neural-core-topology.types";
+} from "../../topology/neural-core-topology.types";
 import type {
   NeuralCoreOperationalPresentationEvent,
   NeuralCoreOperationalPresentationPacingConfigInput,

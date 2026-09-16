@@ -1,9 +1,9 @@
-import type { NeuralCoreOperationalEvent } from "../domain/neural-core-operational-event.types";
-import type { NeuralCoreOperationalExecution } from "../domain/neural-core-operational-execution.types";
+import type { NeuralCoreOperationalEvent } from "../types/neural-core-operational-event.types";
+import type { NeuralCoreOperationalExecution } from "../types/neural-core-operational-execution.types";
 import type {
   NeuralCoreOperationalScenario,
   NeuralCoreOperationalStage,
-} from "../domain/neural-core-operational-scenario.types";
+} from "../types/neural-core-operational-scenario.types";
 import type {
   NeuralCoreOperationalPresentationEvent,
   NeuralCoreOperationalPresentationTimeline,

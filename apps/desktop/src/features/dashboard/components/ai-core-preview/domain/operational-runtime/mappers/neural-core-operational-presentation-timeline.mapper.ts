@@ -1,10 +1,10 @@
 import type {
   NeuralCoreOperationalEvent,
   NeuralCoreOperationalEventType,
-} from "../domain/neural-core-operational-event.types";
+} from "../types/neural-core-operational-event.types";
 import type {
   NeuralCoreOperationalExecution,
-} from "../domain/neural-core-operational-execution.types";
+} from "../types/neural-core-operational-execution.types";
 import {
   DEFAULT_NEURAL_CORE_OPERATIONAL_PRESENTATION_PACING_CONFIG,
 } from "../runtime/neural-core-operational-presentation.constants";

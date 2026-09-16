@@ -1,5 +1,5 @@
-import type { NeuralCoreMetric } from "../../../domain/semantic/neural-core-semantic-context.types";
-import type { NeuralCoreOperationalMetric } from "../domain/neural-core-operational-metric.types";
+import type { NeuralCoreMetric } from "../../semantic/neural-core-semantic-context.types";
+import type { NeuralCoreOperationalMetric } from "../types/neural-core-operational-metric.types";
 
 const EMPTY_NEURAL_CORE_METRICS: readonly NeuralCoreMetric[] = [];
 const EMPTY_NEURAL_CORE_OPERATIONAL_METRICS: readonly NeuralCoreOperationalMetric[] = [];

@@ -2,7 +2,7 @@ import type { NeuralCoreChoreography } from "../../domain/choreography/neural-co
 import type { NeuralCoreState } from "../../domain/contract/neural-core-contract.types";
 import type { NeuralCoreSceneDirectionTimeline } from "../../visualization/direction/neural-core-scene-direction.types";
 import type { NeuralCoreNarrative } from "../../domain/narrative/neural-core-narrative.types";
-import type { NeuralCoreOperationalDemoMetadata } from "../operational/domain/neural-core-operational-scenario.types";
+import type { NeuralCoreOperationalDemoMetadata } from "../../domain/operational-runtime/types/neural-core-operational-scenario.types";
 
 export type NeuralCoreDemoScenario =
   | "none"

@@ -1,16 +1,16 @@
 import { getNeuralCoreClusterDisplayName } from "../../../domain/semantic/neural-core-semantic-context.utils";
 import type {
   NeuralCoreOperationalExecution,
-} from "../domain/neural-core-operational-execution.types";
+} from "../../../domain/operational-runtime/types/neural-core-operational-execution.types";
 import type {
   NeuralCoreOperationalMetric,
-} from "../domain/neural-core-operational-metric.types";
+} from "../../../domain/operational-runtime/types/neural-core-operational-metric.types";
 import type {
   NeuralCoreOperationalOutcome,
-} from "../domain/neural-core-operational-outcome.types";
+} from "../../../domain/operational-runtime/types/neural-core-operational-outcome.types";
 import type {
   NeuralCoreOperationalScenario,
-} from "../domain/neural-core-operational-scenario.types";
+} from "../../../domain/operational-runtime/types/neural-core-operational-scenario.types";
 
 export interface NeuralCoreOperationalOutcomeSummary {
   executionId: string;

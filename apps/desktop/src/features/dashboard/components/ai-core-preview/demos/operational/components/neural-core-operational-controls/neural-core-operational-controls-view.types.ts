@@ -6,7 +6,7 @@ import type {
 import type {
   NeuralCoreOperationalRetryRuntimeState,
   NeuralCoreOperationalRuntimeStatus,
-} from "../../runtime/neural-core-operational-runtime.types";
+} from "../../../../domain/operational-runtime/runtime/neural-core-operational-runtime.types";
 
 export interface NeuralCoreOperationalExecutionOption {
   id: string;

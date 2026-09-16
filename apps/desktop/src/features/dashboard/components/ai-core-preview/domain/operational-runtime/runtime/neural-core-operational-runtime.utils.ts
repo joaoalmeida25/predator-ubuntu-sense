@@ -1,4 +1,4 @@
-import type { NeuralCoreOperationalEvent } from "../domain/neural-core-operational-event.types";
+import type { NeuralCoreOperationalEvent } from "../types/neural-core-operational-event.types";
 import { DEFAULT_NEURAL_CORE_OPERATIONAL_RUNTIME_CONFIG } from "./neural-core-operational-runtime.constants";
 import type {
   NeuralCoreOperationalRuntimeConfig,

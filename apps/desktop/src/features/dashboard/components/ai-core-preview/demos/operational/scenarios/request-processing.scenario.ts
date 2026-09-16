@@ -1,8 +1,8 @@
-import type { NeuralCoreOperationalExecution } from "../domain/neural-core-operational-execution.types";
+import type { NeuralCoreOperationalExecution } from "../../../domain/operational-runtime/types/neural-core-operational-execution.types";
 import type {
   NeuralCoreOperationalScenario,
   NeuralCoreOperationalStage,
-} from "../domain/neural-core-operational-scenario.types";
+} from "../../../domain/operational-runtime/types/neural-core-operational-scenario.types";
 import {
   NEURAL_CORE_OPERATIONAL_DEGRADED_EXECUTION,
 } from "../executions/request-degraded.execution";

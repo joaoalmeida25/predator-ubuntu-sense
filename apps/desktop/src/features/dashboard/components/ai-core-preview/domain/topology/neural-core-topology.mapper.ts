@@ -2,6 +2,8 @@ import type {
   NeuralCoreEntity,
   NeuralCoreEntityKind,
   NeuralCoreGroup,
+  NeuralCoreMetadata,
+  NeuralCoreMetadataValue,
   NeuralCoreSignal,
   NeuralCoreSignalKind,
   NeuralCoreState,
@@ -22,6 +24,62 @@ import {
   clampNeuralCoreTopologyValue,
   normalizeNeuralCoreTopology,
 } from "./neural-core-topology.utils";
+
+const isMetadataRecord = (
+  value: NeuralCoreMetadataValue | undefined,
+): value is NeuralCoreMetadata => value !== null
+  && typeof value === "object"
+  && !Array.isArray(value);
+
+const getMetadataNumber = (
+  metadata: NeuralCoreMetadata | undefined,
+  key: string,
+): number | undefined => {
+  const value = metadata?.[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+};
+
+const getMetadataString = (
+  metadata: NeuralCoreMetadata | undefined,
+  key: string,
+): string | undefined => {
+  const value = metadata?.[key];
+  return typeof value === "string" ? value : undefined;
+};
+
+const getMetadataStringArray = (
+  metadata: NeuralCoreMetadata | undefined,
+  key: string,
+): string[] | undefined => {
+  const value = metadata?.[key];
+  return Array.isArray(value) && value.every((item) => typeof item === "string")
+    ? value
+    : undefined;
+};
+
+const getPositionHint = (
+  metadata: NeuralCoreMetadata | undefined,
+): NeuralCoreCluster["positionHint"] => {
+  const value = metadata?.__neuralCorePositionHint;
+  if (!isMetadataRecord(value)) return undefined;
+  const region = getMetadataString(value, "region");
+  const hemisphere = getMetadataString(value, "hemisphere");
+  const depth = getMetadataString(value, "depth");
+  const priority = getMetadataNumber(value, "priority");
+  return {
+    ...(region === "frontal" || region === "parietal" || region === "temporal"
+      || region === "occipital" || region === "central" || region === "inner"
+      || region === "outer" || region === "left" || region === "right"
+      || region === "lower" || region === "upper" || region === "custom"
+      ? { region }
+      : {}),
+    ...(hemisphere === "left" || hemisphere === "right" || hemisphere === "center"
+      ? { hemisphere }
+      : {}),
+    ...(depth === "surface" || depth === "middle" || depth === "deep" ? { depth } : {}),
+    ...(priority === undefined ? {} : { priority }),
+  };
+};
 
 const mapStatusToTopologyStatus = (
   status?: NeuralCoreStatus,
@@ -125,6 +183,18 @@ const getSignalDirection = (
     : "forward";
 };
 
+const getSignalMetadataString = (
+  signal: NeuralCoreSignal,
+  key: string,
+): string | undefined => {
+  const value = signal.metadata?.[key];
+  return typeof value === "string" ? value : undefined;
+};
+
+const getSignalSynapseId = (signal: NeuralCoreSignal): string => (
+  getSignalMetadataString(signal, "synapseId") ?? `synapse:${signal.id}`
+);
+
 const createClusterFromEntity = (entity: NeuralCoreEntity): NeuralCoreCluster => {
   return {
     id: entity.id,
@@ -133,7 +203,14 @@ const createClusterFromEntity = (entity: NeuralCoreEntity): NeuralCoreCluster =>
     status: mapStatusToTopologyStatus(entity.status),
     activity: entity.activity,
     importance: entity.importance,
-    stability: entity.health,
+    stability: entity.health ?? getMetadataNumber(entity.metadata, "__neuralCoreStability"),
+    plasticity: getMetadataNumber(entity.metadata, "__neuralCorePlasticity"),
+    positionHint: getPositionHint(entity.metadata),
+    semanticContext: {
+      name: entity.label ?? entity.id,
+      description: getMetadataString(entity.metadata, "description"),
+      tags: getMetadataStringArray(entity.metadata, "tags"),
+    },
     entityIds: [entity.id],
     metadata: entity.metadata,
   };
@@ -150,6 +227,14 @@ const createClusterFromGroup = (
     status: mapStatusToTopologyStatus(group.status),
     activity: group.activity,
     importance: group.activity,
+    stability: getMetadataNumber(group.metadata, "__neuralCoreStability"),
+    plasticity: getMetadataNumber(group.metadata, "__neuralCorePlasticity"),
+    positionHint: getPositionHint(group.metadata),
+    semanticContext: {
+      name: group.label ?? group.id,
+      description: getMetadataString(group.metadata, "description"),
+      tags: getMetadataStringArray(group.metadata, "tags"),
+    },
     entityIds: entities
       .filter((entity) => entity.groupId === group.id)
       .map((entity) => entity.id),
@@ -162,7 +247,7 @@ const createSynapseFromSignal = (signal: NeuralCoreSignal): NeuralCoreSynapse =>
   const speed = clampNeuralCoreTopologyValue(signal.speed);
 
   return {
-    id: `synapse:${signal.id}`,
+    id: getSignalSynapseId(signal),
     fromClusterId: signal.from,
     toClusterId: signal.to,
     kind: mapSignalToSynapseKind(signal),
@@ -183,7 +268,7 @@ const createTransmissionFromSignal = (signal: NeuralCoreSignal): NeuralCoreTrans
   const configuredDirection = signal.metadata?.transmissionDirection;
   return {
     id: signal.id,
-    synapseId: `synapse:${signal.id}`,
+    synapseId: getSignalSynapseId(signal),
     kind: mapSignalKindToTransmissionKind(signal.kind),
     status: mapStatusToTopologyStatus(signal.status),
     intensity: signal.intensity,
@@ -231,7 +316,7 @@ const createSignalPathway = (
     label: "Signal Pathway",
     status: mapModeToTopologyStatus(state.mode),
     clusterIds: getOrderedClusterIdsFromSignals(activeSignals),
-    synapseIds: activeSignals.map((signal) => `synapse:${signal.id}`),
+    synapseIds: activeSignals.map(getSignalSynapseId),
     activity: state.globalActivity,
   };
 };
@@ -248,7 +333,7 @@ const createGroupPathways = (
         .map((entity) => entity.id);
       const groupSignalIds = signals
         .filter((signal) => groupEntityIds.includes(signal.from) && groupEntityIds.includes(signal.to))
-        .map((signal) => `synapse:${signal.id}`);
+        .map(getSignalSynapseId);
 
       if (groupEntityIds.length === 0 || groupSignalIds.length === 0) {
         return undefined;
@@ -267,15 +352,46 @@ const createGroupPathways = (
     .filter((pathway): pathway is NeuralCorePathway => pathway !== undefined);
 };
 
+const getConfiguredPathways = (state: NeuralCoreState): NeuralCorePathway[] | undefined => {
+  const value = state.metadata?.__neuralCorePathways;
+  if (!Array.isArray(value)) return undefined;
+  const pathways = value.flatMap((candidate): NeuralCorePathway[] => {
+    if (!isMetadataRecord(candidate)) return [];
+    const id = getMetadataString(candidate, "id");
+    const clusterIds = getMetadataStringArray(candidate, "clusterIds");
+    const synapseIds = getMetadataStringArray(candidate, "synapseIds");
+    if (id === undefined || clusterIds === undefined || synapseIds === undefined) return [];
+    const configuredStatus = getMetadataString(candidate, "status");
+    const status: NeuralCoreTopologyStatus = configuredStatus === "recovering"
+      ? "processing"
+      : configuredStatus === "idle" || configuredStatus === "active"
+        || configuredStatus === "processing" || configuredStatus === "success"
+        || configuredStatus === "warning" || configuredStatus === "error"
+        || configuredStatus === "disabled"
+        ? configuredStatus
+        : mapModeToTopologyStatus(state.mode);
+    return [{
+      id,
+      label: getMetadataString(candidate, "label"),
+      status,
+      clusterIds,
+      synapseIds,
+      activity: getMetadataNumber(candidate, "activity"),
+      metadata: isMetadataRecord(candidate.metadata) ? candidate.metadata : undefined,
+    }];
+  });
+  return pathways.length > 0 ? pathways : undefined;
+};
+
 export const createNeuralCoreTopologyFromState = (
   state: NeuralCoreState,
 ): NeuralCoreTopology => {
   const groups = state.groups ?? [];
   const synapses = state.signals.map(createSynapseFromSignal);
   const signalPathway = createSignalPathway(state.signals, state);
-  const pathways = signalPathway
+  const pathways = getConfiguredPathways(state) ?? (signalPathway
     ? [signalPathway]
-    : createGroupPathways(groups, state.entities, state.signals);
+    : createGroupPathways(groups, state.entities, state.signals));
 
   return normalizeNeuralCoreTopology({
     clusters: [

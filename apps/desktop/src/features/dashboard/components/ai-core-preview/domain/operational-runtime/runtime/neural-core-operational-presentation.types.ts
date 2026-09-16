@@ -1,6 +1,6 @@
 import type {
   NeuralCoreOperationalEventType,
-} from "../domain/neural-core-operational-event.types";
+} from "../types/neural-core-operational-event.types";
 
 export interface NeuralCoreOperationalPresentationEvent {
   sourceEventId: string;

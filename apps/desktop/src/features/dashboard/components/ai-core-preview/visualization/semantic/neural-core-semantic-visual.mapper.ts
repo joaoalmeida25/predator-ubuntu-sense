@@ -19,7 +19,7 @@ import type {
 import type { NeuralCoreTopologyVisualState } from "../topology/neural-core-topology-visual.types";
 import type {
   NeuralCoreOperationalVisualOverlay,
-} from "../../demos/operational/mappers/neural-core-operational-visual-state.mapper";
+} from "../../domain/operational-runtime/mappers/neural-core-operational-visual-state.mapper";
 import {
   EMPTY_NEURAL_CORE_CLUSTER_SEMANTIC_EFFECTS,
   EMPTY_NEURAL_CORE_GLOBAL_SEMANTIC_EFFECTS,

@@ -1,11 +1,11 @@
 import type {
   NeuralCoreMetric,
-} from "../../../domain/semantic/neural-core-semantic-context.types";
+} from "../../semantic/neural-core-semantic-context.types";
 import type {
   NeuralCoreCluster,
   NeuralCoreTopology,
   NeuralCoreTopologyStatus,
-} from "../../../domain/topology/neural-core-topology.types";
+} from "../../topology/neural-core-topology.types";
 import type {
   NeuralCoreOperationalClusterRuntimeState,
   NeuralCoreOperationalImpactRuntimeState,

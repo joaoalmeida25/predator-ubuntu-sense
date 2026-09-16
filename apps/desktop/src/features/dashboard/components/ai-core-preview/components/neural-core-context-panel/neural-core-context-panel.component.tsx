@@ -14,11 +14,11 @@ import type { NeuralCoreInspectionFocusState } from "../../visualization/inspect
 import type { NeuralCoreMetric } from "../../domain/semantic/neural-core-semantic-context.types";
 import type {
   NeuralCoreOperationalClusterVisualState,
-} from "../../demos/operational/mappers/neural-core-operational-visual-state.mapper";
+} from "../../domain/operational-runtime/mappers/neural-core-operational-visual-state.mapper";
 import type {
   NeuralCoreOperationalImpactRuntimeState,
   NeuralCoreOperationalRetryRuntimeState,
-} from "../../demos/operational/runtime/neural-core-operational-runtime.types";
+} from "../../domain/operational-runtime/runtime/neural-core-operational-runtime.types";
 import {
   formatNeuralCoreActivity,
   formatNeuralCoreClusterKind,

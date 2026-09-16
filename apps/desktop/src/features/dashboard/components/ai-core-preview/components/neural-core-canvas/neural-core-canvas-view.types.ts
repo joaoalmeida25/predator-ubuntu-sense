@@ -36,13 +36,13 @@ import type {
 import type {
   NeuralCoreOperationalRuntimeStatus,
   NeuralCoreOperationalRuntimeValueRef,
-} from "../../demos/operational/runtime/neural-core-operational-runtime.types";
+} from "../../domain/operational-runtime/runtime/neural-core-operational-runtime.types";
 import type {
   NeuralCoreOperationalRouteVisualRequest,
-} from "../../demos/operational/mappers/neural-core-operational-propagation.mapper";
+} from "../../domain/operational-runtime/mappers/neural-core-operational-propagation.mapper";
 import type {
   NeuralCoreOperationalVisualOverlay,
-} from "../../demos/operational/mappers/neural-core-operational-visual-state.mapper";
+} from "../../domain/operational-runtime/mappers/neural-core-operational-visual-state.mapper";
 
 export interface NeuralCoreCanvasViewProps {
   fallback: ReactNode;
