@@ -11,7 +11,11 @@ import type {
   NeuralCoreStatus as InternalNeuralCoreStatus,
 } from "../../domain/contract/neural-core-contract.types";
 import { createNeuralCoreTopologyFromState } from "../../domain/topology/neural-core-topology.mapper";
-import type { NeuralCoreTopology as InternalNeuralCoreTopology } from "../../domain/topology/neural-core-topology.types";
+import type { NeuralCoreTopologyCompatibilityData } from "../../domain/topology/neural-core-topology-compatibility.types";
+import type {
+  NeuralCoreTopology as InternalNeuralCoreTopology,
+  NeuralCoreTopologyStatus,
+} from "../../domain/topology/neural-core-topology.types";
 import type {
   NeuralCoreBuiltInRelationKind,
   NeuralCoreEntity,
@@ -92,6 +96,10 @@ const mapEntityStatus = (
     case "disabled": return "disabled";
   }
 };
+
+const mapTopologyStatus = (
+  status: NeuralCoreOperationalStatus,
+): NeuralCoreTopologyStatus => status === "recovering" ? "processing" : status;
 
 const mapRelationToSignalKind = (
   relation: NeuralCoreRelationKind,
@@ -214,6 +222,7 @@ const averageActivity = (model: NeuralCoreModel): number => {
 
 export const adaptNeuralCoreModel = (
   model: NeuralCoreModel,
+  compatibility?: NeuralCoreTopologyCompatibilityData,
 ): NeuralCoreModelAdapterResult => {
   const internalClusterIdByEntityId = new Map<string, string>();
   const publicClusterIdByInternalClusterId = new Map<string, string>();
@@ -248,20 +257,20 @@ export const adaptNeuralCoreModel = (
     signals: model.routes.map(mapRouteToSignal),
     groups,
     globalActivity: averageActivity(model),
-    metadata: {
-      ...mapMetadata(model.metadata),
-      __neuralCorePathways: model.pathways.map((pathway) => ({
-        id: pathway.id,
-        ...(pathway.label === undefined ? {} : { label: pathway.label }),
-        clusterIds: [...pathway.clusterIds],
-        synapseIds: [...pathway.routeIds],
-        status: pathway.status,
-        activity: averageActivity(model),
-        metadata: mapMetadata(pathway.metadata),
-      })),
-    },
+    metadata: mapMetadata(model.metadata),
   };
-  const topology = createNeuralCoreTopologyFromState(state);
+  const topology = createNeuralCoreTopologyFromState(state, {
+    clusterDataById: compatibility?.clusterDataById ?? new Map(),
+    pathways: model.pathways.map((pathway) => ({
+      id: pathway.id,
+      label: pathway.label,
+      clusterIds: [...pathway.clusterIds],
+      synapseIds: [...pathway.routeIds],
+      status: mapTopologyStatus(pathway.status),
+      activity: averageActivity(model),
+      metadata: mapMetadata(pathway.metadata),
+    })),
+  });
   state.topology = topology;
 
   return Object.freeze({

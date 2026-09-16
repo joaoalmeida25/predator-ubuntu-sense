@@ -9,6 +9,7 @@ import { NeuralCoreRenderer } from "../../controllers/neural-core-renderer/neura
 import { useNeuralCoreRendererObservers } from "../../controllers/neural-core-renderer/neural-core-renderer-observers.context";
 import { useNeuralCoreInspectionBinding } from "../../controllers/neural-core-renderer/neural-core-inspection-binding.context";
 import { useNeuralCorePresentationBinding } from "../../controllers/neural-core-renderer/neural-core-presentation-binding.context";
+import { useNeuralCoreModelCompatibility } from "../../controllers/neural-core-renderer/neural-core-model-compatibility.context";
 import { useNeuralCoreRuntimeBinding } from "../../controllers/neural-core-runtime/neural-core-runtime-binding.context";
 import { adaptNeuralCoreConfig } from "../adapters/neural-core-config.adapter";
 import {
@@ -51,6 +52,7 @@ export const NeuralCore = (props: NeuralCoreProps): ReactElement => {
   } = props;
   const runtimeBinding = useNeuralCoreRuntimeBinding();
   const inspectionBinding = useNeuralCoreInspectionBinding();
+  const modelCompatibility = useNeuralCoreModelCompatibility();
   const presentationBinding = useNeuralCorePresentationBinding();
   const rendererObservers = useNeuralCoreRendererObservers();
   const { emitEvent, reportErrorOnce } = useNeuralCorePublicEvents({ onError, onEvent });
@@ -63,8 +65,10 @@ export const NeuralCore = (props: NeuralCoreProps): ReactElement => {
     [config, reducedMotion],
   );
   const adaptedModel = useMemo(
-    () => resolvedModel === undefined ? undefined : adaptNeuralCoreModel(resolvedModel),
-    [resolvedModel],
+    () => resolvedModel === undefined
+      ? undefined
+      : adaptNeuralCoreModel(resolvedModel, modelCompatibility),
+    [modelCompatibility, resolvedModel],
   );
   const runtimeResult = useMemo(() => {
     if (runtimeInput === undefined || resolvedModel === undefined) {

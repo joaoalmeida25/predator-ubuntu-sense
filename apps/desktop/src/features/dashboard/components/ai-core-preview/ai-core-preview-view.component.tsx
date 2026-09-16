@@ -10,6 +10,7 @@ import { NeuralCoreRuntimeBindingProvider } from "./controllers/neural-core-runt
 import { NeuralCoreRendererObserversProvider } from "./controllers/neural-core-renderer/neural-core-renderer-observers.context";
 import { NeuralCoreInspectionBindingProvider } from "./controllers/neural-core-renderer/neural-core-inspection-binding.context";
 import { NeuralCorePresentationBindingProvider } from "./controllers/neural-core-renderer/neural-core-presentation-binding.context";
+import { NeuralCoreModelCompatibilityProvider } from "./controllers/neural-core-renderer/neural-core-model-compatibility.context";
 import { NeuralCoreNarrativeOverlay } from "./components/neural-core-narrative-overlay/neural-core-narrative-overlay.component";
 
 export const AiCorePreviewView = ({
@@ -30,6 +31,7 @@ export const AiCorePreviewView = ({
   publicModel,
   publicRuntime,
   inspectionBinding,
+  modelCompatibility,
   presentationBinding,
   runtimeBinding,
   onPublicInteractionStateChange,
@@ -60,18 +62,20 @@ export const AiCorePreviewView = ({
 
         <NeuralCoreRendererObserversProvider observers={{ onNarrativeStateChange }}>
           <NeuralCoreInspectionBindingProvider binding={inspectionBinding}>
-            <NeuralCorePresentationBindingProvider binding={presentationBinding}>
-              <NeuralCoreRuntimeBindingProvider binding={runtimeBinding}>
-                <NeuralCore
-                  model={publicModel}
-                  config={publicConfig}
-                  runtime={publicRuntime}
-                  interactionState={publicInteractionState}
-                  onInteractionStateChange={onPublicInteractionStateChange}
-                  ariaLabel="AI Core visualization"
-                />
-              </NeuralCoreRuntimeBindingProvider>
-            </NeuralCorePresentationBindingProvider>
+            <NeuralCoreModelCompatibilityProvider compatibility={modelCompatibility}>
+              <NeuralCorePresentationBindingProvider binding={presentationBinding}>
+                <NeuralCoreRuntimeBindingProvider binding={runtimeBinding}>
+                  <NeuralCore
+                    model={publicModel}
+                    config={publicConfig}
+                    runtime={publicRuntime}
+                    interactionState={publicInteractionState}
+                    onInteractionStateChange={onPublicInteractionStateChange}
+                    ariaLabel="AI Core visualization"
+                  />
+                </NeuralCoreRuntimeBindingProvider>
+              </NeuralCorePresentationBindingProvider>
+            </NeuralCoreModelCompatibilityProvider>
           </NeuralCoreInspectionBindingProvider>
         </NeuralCoreRendererObserversProvider>
 

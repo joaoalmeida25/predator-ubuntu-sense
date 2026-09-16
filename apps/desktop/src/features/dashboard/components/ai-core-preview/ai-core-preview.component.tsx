@@ -466,6 +466,7 @@ export const AiCorePreview = ({
       publicConfig={publicConfig}
       publicRuntime={publicRuntime}
       inspectionBinding={inspectionBinding}
+      modelCompatibility={demoModelMapping.compatibility}
       presentationBinding={presentationBinding}
       runtimeBinding={runtimeBinding}
       publicInteractionState={publicInteractionState}

@@ -13,6 +13,7 @@ import type { NeuralCoreChoreography } from "./domain/choreography/neural-core-c
 import type { NeuralCoreRuntimeBinding } from "./controllers/neural-core-runtime/neural-core-runtime-binding.context";
 import type { NeuralCoreInspectionBinding } from "./controllers/neural-core-renderer/neural-core-inspection-binding.context";
 import type { NeuralCorePresentationBinding } from "./domain/presentation/neural-core-presentation-binding.types";
+import type { NeuralCoreTopologyCompatibilityData } from "./domain/topology/neural-core-topology-compatibility.types";
 import type { NeuralCoreDemoScenario } from "./demos/neural-core-demo-state/neural-core-demo-state.types";
 import type {
   NeuralCorePropagationConfigInput,
@@ -116,6 +117,7 @@ export interface AiCorePreviewViewProps {
   publicModel: PublicNeuralCoreModelInput;
   publicRuntime?: PublicNeuralCoreRuntimeInput;
   inspectionBinding: NeuralCoreInspectionBinding;
+  modelCompatibility: NeuralCoreTopologyCompatibilityData;
   presentationBinding: NeuralCorePresentationBinding;
   runtimeBinding?: NeuralCoreRuntimeBinding;
   onPublicInteractionStateChange: PublicNeuralCoreInteractionStateChangeHandler;

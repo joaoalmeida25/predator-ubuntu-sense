@@ -19,6 +19,7 @@ import type {
 } from "../../domain/topology/neural-core-topology.types";
 import type { NeuralCoreSceneDirectionTimeline } from "../../visualization/direction/neural-core-scene-direction.types";
 import type { NeuralCorePresentationBinding } from "../../domain/presentation/neural-core-presentation-binding.types";
+import type { NeuralCoreTopologyCompatibilityData } from "../../domain/topology/neural-core-topology-compatibility.types";
 
 const mapStatus = (
   status: NeuralCoreTopologyStatus | undefined,
@@ -94,27 +95,7 @@ const mapCluster = (
   activity: cluster.activity,
   importance: cluster.importance,
   tags: cluster.semanticContext?.tags,
-  metadata: {
-    ...(cluster.metadata ?? {}),
-    ...(cluster.positionHint === undefined ? {} : {
-      __neuralCorePositionHint: {
-        ...(cluster.positionHint.region === undefined
-          ? {}
-          : { region: cluster.positionHint.region }),
-        ...(cluster.positionHint.hemisphere === undefined
-          ? {}
-          : { hemisphere: cluster.positionHint.hemisphere }),
-        ...(cluster.positionHint.depth === undefined
-          ? {}
-          : { depth: cluster.positionHint.depth }),
-        ...(cluster.positionHint.priority === undefined
-          ? {}
-          : { priority: cluster.positionHint.priority }),
-      },
-    }),
-    ...(cluster.stability === undefined ? {} : { __neuralCoreStability: cluster.stability }),
-    ...(cluster.plasticity === undefined ? {} : { __neuralCorePlasticity: cluster.plasticity }),
-  },
+  metadata: cluster.metadata,
 });
 
 const mapDemoRouteEndpoint = (
@@ -172,6 +153,7 @@ interface MapNeuralCoreDemoModelParams {
 }
 
 export interface NeuralCoreDemoModelMapping {
+  readonly compatibility: NeuralCoreTopologyCompatibilityData;
   readonly model: NeuralCoreModelInput;
   readonly presentation: NeuralCorePresentationBinding;
 }
@@ -204,6 +186,16 @@ export const mapNeuralCoreDemoModel = ({
   });
 
   return {
+    compatibility: {
+      clusterDataById: new Map(topology?.clusters.map((cluster) => [
+        cluster.id,
+        {
+          plasticity: cluster.plasticity,
+          positionHint: cluster.positionHint,
+          stability: cluster.stability,
+        },
+      ]) ?? []),
+    },
     model: {
       id,
       entities: state?.entities.map((entity) => mapEntity(entity, topology)) ?? [],
